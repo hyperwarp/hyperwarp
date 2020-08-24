@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+message NVMfTransport {
+    /**
+     * NVMe transports
+     * 
+     * This mirrors what SPDK is currently doing to simplify integration with SPDK.
+     *
+     * NOTE: These are mapped directly to the NVMe over Fabrics TRTYPE values, except for PCIe,
+     * which is a special case since NVMe over Fabrics does not define a TRTYPE for local PCIe.
+     *
+     * Currently, this uses 256 for PCIe which is intentionally outside of the 8-bit range of TRTYPE.
+     * If the NVMe-oF specification ever defines a PCIe TRTYPE, this should be updated.
+     */
+    enum NVMfTransportType {
+        TRTYPE_UNKNOWN = 0;
+
+        // PCIe Transport (locally attached devices)
+        TRTYPE_PCIE = 256;
+
+        // RDMA Transport (RoCE, iWARP, etc.)
+        TRTYPE_RDMA = 1;
+
+        // Fibre Channel (FC) Transport
+        TRTYPE_FC = 2;
+
+        // TCP Transport
+        TRTYPE_TCP = 3;
+
+        // Custom Transport (Not spec defined)
+        TRTYPE_CUSTOM = 4096;
+    }
+
+    /**
+     * Address family types
+     *
+     * NOTE: These are directly mapped to the NVMe over Fabrics ADRFAM values.
+     */
+    enum NVMfAddressFamily {
+        ADRFAM_UNKNOWN = 0;
+
+        // IPv4 (AF_INET)
+        ADRFAM_IPV4 = 1;
+
+        // IPv6 (AF_INET6)
+        ADRFAM_IPV6 = 2;
+
+        // InfiniBand (AF_IB)
+        ADRFAM_IB = 3;
+
+        // Fibre Channel address family
+        ADRFAM_FC = 4;
+
+        // Intra-host transport (loopback)
+        ADRFAM_INTRA_HOST = 254;
+    }
+
+	/**
+	 * NVMe transport string.
+	 */
+    string transport_string = 1;
+
+	/**
+	 * NVMe transport type.
+	 */
+    NVMfTransportType type = 2;
+
+	/**
+	 * Address family of the transport address.
+	 *
+	 * For PCIe, this value is ignored.
+	 */
+    NVMfAddressFamily address_family = 3;
+    
+	/**
+	 * Transport address of the NVMe-oF endpoint. For transports which use IP
+	 * addressing (e.g. RDMA), this should be an IP address. For PCIe, this
+	 * can either be a zero length string (the whole bus) or a PCI address
+	 * in the format DDDD:BB:DD.FF or DDDD.BB.DD.FF. For FC the string is
+	 * formatted as: nn-0xWWNN:pn-0xWWPN” where WWNN is the Node_Name of the
+	 * target NVMe_Port and WWPN is the N_Port_Name of the target NVMe_Port.
+	 */
+    string address = 4;
+
+	/**
+	 * Transport service id of the NVMe-oF endpoint.  For transports which use
+	 * IP addressing (e.g. RDMA), this field shoud be the port number. For PCIe,
+	 * and FC this is always a zero length string.
+	 */
+    string service_id = 5;
+
+	/**
+	 * Subsystem NQN of the NVMe over Fabrics endpoint. May be a zero length string.
+	 */
+    string subsystem_nqn = 6;
+}
+
+message PhysicalDiskRange {
+    uint64 key = 1;
+	uint64 physical_disk_key = 2;
+	uint64 sector_start = 3;
+	uint64 sector_end = 4;
+	uint64 sector_count = 5;
+}
+
+message PhysicalDisk {
+    // unique identifier of this physical disk
+    uint64 key = 1;
+
+    NVMfTransport transport = 2;
+
+    // in bytes, e.g. 4096
+    uint64 sector_size = 4;
+
+    // e.g. for 1 GiB disk with 4 KiB = 262,144
+    uint64 sector_count = 3;
+
+    repeated PhysicalDiskRange physical_disk_ranges = 5;
+}
+
+message VirtualDiskRange {
+    // unique identifier of this virtual disk range
+    uint64 key = 1;
+
+    // the key of the virtual disk this range belongs to
+    uint64 virtual_disk_key = 2;
+
+	uint64 sector_start = 3;
+	uint64 sector_end = 4;
+	uint64 sector_count = 5;
+
+    // the physical disk ranges containing data and parity for this virtual disk range
+    repeated PhysicalDiskRange ranges = 6;
+}
+
+message VirtualDisk {
+    enum ErasureCodeProfile {
+        EC_4_2P = 0;
+        EC_8_2P = 1;
+        EC_10_2P = 2;
+    }
+
+    // unique identifier of this virtual disk
+    uint64 key = 1;
+
+    // name of this virtual disk
+    string name = 2;
+
+    // the erasure code profile to use
+    ErasureCodeProfile ec_profile = 3;
+
+    // the virtual disk ranges this virtual disk is made of
+    repeated VirtualDiskRange volume_ranges = 4;
+}
+
+message MetaData {
+    repeated PhysicalDisk physical_disks = 1;
+    repeated VirtualDisk virtual_disks = 2;
+}

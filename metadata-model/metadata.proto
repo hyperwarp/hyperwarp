@@ -151,8 +151,11 @@ message VirtualDisk {
     // the erasure code profile to use
     ErasureCodeProfile ec_profile = 3;
 
+    // size of the virtual disk in GiBs
+    uint64 size = 4;
+
     // the virtual disk ranges this virtual disk is made of
-    repeated VirtualDiskRange volume_ranges = 4;
+    repeated VirtualDiskRange volume_ranges = 5;
 }
 
 message MetaData {

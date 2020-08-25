@@ -40,9 +40,56 @@ bin/
 
 ## Run the samples using the development container
 
-1. Pull the development container image for Linux amd64 from [Docker Hub](https://hub.docker.com/r/hyperwarp/build-metadata) and run it, either manually or as a VSCode devcontainer.
+### Using VS Code
+
+1. Clone this repository with VS Code
+
+![](assets/vscode_step1_clone_repo.png)
+
+2. When prompted, select to open the cloned repository in VS Code
+
+![](assets/vscode_step2_open_cloned_repo.png)
+
+3. When prompted, select to "Reopen in Container" or "Clone in Volume"
+
+![](assets/vscode_step3_reopen_in_container.png)
+
+4. Open a Terminal within VS Code and build the code as described [above](README.md#build)
+
+5. Start a local FoundationDB server by running `sudo service foundationdb start` inside the container.
+
+6. Run the samples, e.g. `./bin/samples/physical-disk-sample`
+
+```bash
+$ ./bin/samples/physical-disk-sample
+Wrote PhysicalDisk to FDB
+  Key = 1234567890
+  Sector Count = 266144
+  Sector Size = 4096
+Read PhysicalDisk from FDB
+  Key = 1234567890
+  Sector Count = 266144
+  Sector Size = 4096
+Tada!
+$
+```
+
+### Manually
+
+1. Clone this repository
+
+```bash
+git clone git@github.ibm.com:hyperwarp/hyperwarp-metadata.git
+```
+
+2. From within the cloned folder, pull the development container image for Linux amd64 from [Docker Hub](https://hub.docker.com/r/hyperwarp/build-metadata) and run it while mounting the cloned source code folder into the container.
+
+```bash
+docker run -it -v $(pwd):/root/hyperwarp-metadata hyperwarp/build-metadata:latest
+```
+
 2. Build the code as described [above](README.md#build).
-3. Start a local FoundationDB server by running `sudo service foundationdb start` inside the container.
+3. Start a local FoundationDB server by running `service foundationdb start` inside the container.
 4. Run the samples, e.g. `./bin/samples/physical-disk-sample`
 
 ```bash

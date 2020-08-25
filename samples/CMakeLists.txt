@@ -14,16 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(physical-disk-sample physical-disk-sample.c)
+macro(add_sample target source)
+    add_executable(${target} ${source})
+    target_link_libraries(${target} pthread)
+    target_link_libraries(${target} hyperwarp-metadata-fdb)
+    target_include_directories(${target} PUBLIC
+                            "${PROJECT_BINARY_DIR}"
+                            "${PROJECT_SOURCE_DIR}"
+                            "${CMAKE_CURRENT_SOURCE_DIR}"
+                            )
+endmacro()
 
-target_link_libraries(physical-disk-sample fdb_c)
-target_link_libraries(physical-disk-sample m)
-target_link_libraries(physical-disk-sample pthread)
-target_link_libraries(physical-disk-sample rt)
-target_link_libraries(physical-disk-sample hyperwarp-metadata-fdb)
-
-target_include_directories(physical-disk-sample PUBLIC
-                          "${PROJECT_BINARY_DIR}"
-                          "${PROJECT_SOURCE_DIR}"
-                          "${CMAKE_CURRENT_SOURCE_DIR}"
-                          )
+add_sample(allocation allocation.c)
+add_sample(physical-disk-sample physical-disk-sample.c)

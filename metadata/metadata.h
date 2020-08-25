@@ -1,3 +1,3 @@
 #include <metadata.pb-c.h>
 
-PhysicalDisk create_physical_disk(int sector_count, int sector_size);
+PhysicalDisk create_physical_disk(uint64_t sector_count, uint64_t sector_size);

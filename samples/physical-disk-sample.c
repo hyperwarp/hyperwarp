@@ -11,6 +11,7 @@
 #include <foundationdb/fdb_c.h>
 
 #include <metadata-foundationdb.h>
+#include <metadata.h>
 
 void *run_net(void *_unused)
 {
@@ -31,11 +32,7 @@ int main()
 	FDBDatabase *database;
 	chk(fdb_create_database(NULL, &database));
 
-	PhysicalDisk physical_disk1 = PHYSICAL_DISK__INIT;
-	physical_disk1.key = 1234567890ULL;
-	physical_disk1.sector_count = 266144ULL;
-	physical_disk1.sector_size = 4096ULL;
-
+	PhysicalDisk physical_disk1 = create_physical_disk(266144ULL, 4096ULL);
 	physical_disk_persist(database, &physical_disk1);
 
 	printf("Wrote PhysicalDisk to FDB\n");

@@ -14,11 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.10)
+add_library(hyperwarp-metadata SHARED metadata.h metadata.c)
 
-project(hyperwarp-metadata)
+target_link_libraries(hyperwarp-metadata hyperwarp-metadata-model)
 
-add_subdirectory(metadata-model bin/metadata-model)
-add_subdirectory(metadata-foundationdb bin/metadata-foundationdb)
-add_subdirectory(metadata bin/metadata)
-add_subdirectory(samples bin/samples)
+target_include_directories(hyperwarp-metadata PUBLIC
+                          "${PROJECT_BINARY_DIR}"
+                          "${PROJECT_SOURCE_DIR}"
+                          "${CMAKE_CURRENT_SOURCE_DIR}"
+                          )

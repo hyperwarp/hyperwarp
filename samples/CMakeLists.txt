@@ -17,6 +17,7 @@
 macro(add_sample target source)
     add_executable(${target} ${source})
     target_link_libraries(${target} pthread)
+    target_link_libraries(${target} hyperwarp-metadata)
     target_link_libraries(${target} hyperwarp-metadata-fdb)
     target_include_directories(${target} PUBLIC
                             "${PROJECT_BINARY_DIR}"

@@ -25,7 +25,7 @@ void print_physical_disk(PhysicalDisk* physical_disk) {
 	printf("      Key = %" PRIu64 "\n", physical_disk->key);
 	printf("      Sector Count = %" PRIu64 "\n", physical_disk->sector_count);
 	printf("      Sector Size = %" PRIu64 "\n", physical_disk->sector_size);
-	printf("      Disk ranges allocated = %" PRIu64 "\n", physical_disk->n_physical_disk_ranges);
+	printf("      Disk ranges allocated = %" PRIu64 "\n", physical_disk->n_ranges);
 }
 
 void print_virtual_disk(VirtualDisk* virtual_disk) {
@@ -67,7 +67,7 @@ int main()
 	FDBDatabase *database;
 	chk(fdb_create_database(NULL, &database));
 
-	MetaData *metadata = create_metadata();
+	MetaData *metadata = new_metadata();
 
 	PhysicalDisk *physical_disk1 = create_physical_disk(metadata, 266144ULL, 4096ULL);
 	PhysicalDiskRange *pd_range1 = create_physical_disk_range(1110ULL, physical_disk1->key, 0ULL, 266144ULL, 266144ULL);
@@ -115,15 +115,15 @@ int main()
 
 	print_meta_data(metadata);
 
-	free(physical_disk1->physical_disk_ranges);
-	free(physical_disk2->physical_disk_ranges);
-	free(physical_disk3->physical_disk_ranges);
-	free(physical_disk4->physical_disk_ranges);
-	free(physical_disk5->physical_disk_ranges);
-	free(physical_disk6->physical_disk_ranges);
+	free(physical_disk1->ranges);
+	free(physical_disk2->ranges);
+	free(physical_disk3->ranges);
+	free(physical_disk4->ranges);
+	free(physical_disk5->ranges);
+	free(physical_disk6->ranges);
 
 	free(vd_range1->ranges);
-	free(virtual_disk1->volume_ranges);
+	free(virtual_disk1->ranges);
 
 	free(metadata->physical_disks);
 	free(metadata->virtual_disks);

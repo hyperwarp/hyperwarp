@@ -27,4 +27,5 @@ macro(add_sample target source)
 endmacro()
 
 add_sample(allocation allocation.c)
+add_sample(metadata-sample metadata-sample.c)
 add_sample(physical-disk-sample physical-disk-sample.c)

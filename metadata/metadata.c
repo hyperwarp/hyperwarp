@@ -53,14 +53,15 @@ VirtualDiskRange *create_virtual_disk_range(uint64_t key, uint64_t sector_start,
 }
 
 VirtualDisk *create_virtual_disk(MetaData *metadata,
-				 char *name,
+				 const char *name,
 				 VirtualDisk__ErasureCodeProfile ec_profile,
 				 uint64_t size) {
 	VirtualDisk *virtual_disk = (VirtualDisk*)malloc(sizeof(VirtualDisk));
 	virtual_disk__init(virtual_disk);
 
 	virtual_disk->key = 123ULL;
-	virtual_disk->name = name;
+	virtual_disk->name = (char *)malloc(strlen(name) + 1);
+	memcpy(virtual_disk->name, name, strlen(name) + 1);;
 	virtual_disk->ec_profile = ec_profile;
 	virtual_disk->size = size;
 

@@ -32,7 +32,7 @@ int main()
 	FDBDatabase *database;
 	chk(fdb_create_database(NULL, &database));
 
-	PhysicalDisk *physical_disk1 = create_physical_disk(266144ULL, 4096ULL);
+	PhysicalDisk *physical_disk1 = create_physical_disk(NULL, 266144ULL, 4096ULL);
 	physical_disk_persist(database, physical_disk1);
 
 	printf("Wrote PhysicalDisk to FDB\n");

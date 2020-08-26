@@ -3,13 +3,20 @@
 #include <metadata.h>
 #include <stdlib.h>
 
-PhysicalDisk *create_physical_disk(uint64_t sector_count, uint64_t sector_size)
+PhysicalDisk *create_physical_disk(MetaData *metadata,
+				   uint64_t sector_count,
+				   uint64_t sector_size)
 {
         PhysicalDisk *physical_disk = (PhysicalDisk*)malloc(sizeof(PhysicalDisk));
 	physical_disk__init(physical_disk);
         physical_disk->key = 111444890ULL;
         physical_disk->sector_count = sector_count;
         physical_disk->sector_size = sector_size;
+
+	if (metadata != NULL)
+	{
+		add_physical_disk(metadata, physical_disk);
+	}
 
 	return physical_disk;
 }
@@ -45,12 +52,22 @@ VirtualDiskRange *create_virtual_disk_range(uint64_t key, uint64_t sector_start,
 	return vd_range;
 }
 
-VirtualDisk *create_virtual_disk(uint64_t key, char *name, VirtualDisk__ErasureCodeProfile ec_profile) {
+VirtualDisk *create_virtual_disk(MetaData *metadata,
+				 char *name,
+				 VirtualDisk__ErasureCodeProfile ec_profile,
+				 uint64_t size) {
 	VirtualDisk *virtual_disk = (VirtualDisk*)malloc(sizeof(VirtualDisk));
 	virtual_disk__init(virtual_disk);
-	virtual_disk->key = key;
+
+	virtual_disk->key = 123ULL;
 	virtual_disk->name = name;
 	virtual_disk->ec_profile = ec_profile;
+	virtual_disk->size = size;
+
+	if (metadata != NULL)
+	{
+		add_virtual_disk(metadata, virtual_disk);
+	}
 
 	return virtual_disk;
 }
@@ -68,4 +85,22 @@ MetaData *create_metadata() {
 	meta_data__init(metadata);
 
 	return metadata;
+}
+
+void add_physical_disk(MetaData *metadata, PhysicalDisk *disk)
+{
+	size_t last = metadata->n_physical_disks;
+	metadata->physical_disks = realloc(metadata->physical_disks,
+					   sizeof(PhysicalDisk) * (last + 1));
+	metadata->physical_disks[last] = disk;
+	metadata->n_physical_disks = last + 1;
+}
+
+void add_virtual_disk(MetaData *metadata, VirtualDisk *disk)
+{
+	size_t last = metadata->n_virtual_disks;
+	metadata->virtual_disks = realloc(metadata->virtual_disks,
+					   sizeof(VirtualDisk) * (last + 1));
+	metadata->virtual_disks[last] = disk;
+	metadata->n_virtual_disks = last + 1;
 }

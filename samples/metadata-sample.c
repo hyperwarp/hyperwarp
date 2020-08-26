@@ -67,27 +67,29 @@ int main()
 	FDBDatabase *database;
 	chk(fdb_create_database(NULL, &database));
 
-	PhysicalDisk *physical_disk1 = create_physical_disk(266144ULL, 4096ULL);
+	MetaData *metadata = create_metadata();
+
+	PhysicalDisk *physical_disk1 = create_physical_disk(metadata, 266144ULL, 4096ULL);
 	PhysicalDiskRange *pd_range1 = create_physical_disk_range(1110ULL, physical_disk1->key, 0ULL, 266144ULL, 266144ULL);
 	add_physical_disk_range_to_physical_disk(physical_disk1, pd_range1);
 
-	PhysicalDisk *physical_disk2 = create_physical_disk(266144ULL, 4096ULL);
+	PhysicalDisk *physical_disk2 = create_physical_disk(metadata, 266144ULL, 4096ULL);
 	PhysicalDiskRange *pd_range2 = create_physical_disk_range(1110ULL, physical_disk2->key, 0ULL, 266144ULL, 266144ULL);
 	add_physical_disk_range_to_physical_disk(physical_disk2, pd_range2);
 
-	PhysicalDisk *physical_disk3 = create_physical_disk(266144ULL, 4096ULL);
+	PhysicalDisk *physical_disk3 = create_physical_disk(metadata, 266144ULL, 4096ULL);
 	PhysicalDiskRange *pd_range3 = create_physical_disk_range(1110ULL, physical_disk3->key, 0ULL, 266144ULL, 266144ULL);
 	add_physical_disk_range_to_physical_disk(physical_disk3, pd_range3);
 
-	PhysicalDisk *physical_disk4 = create_physical_disk(266144ULL, 4096ULL);
+	PhysicalDisk *physical_disk4 = create_physical_disk(metadata, 266144ULL, 4096ULL);
 	PhysicalDiskRange *pd_range4 = create_physical_disk_range(1110ULL, physical_disk4->key, 0ULL, 266144ULL, 266144ULL);
 	add_physical_disk_range_to_physical_disk(physical_disk4, pd_range4);
 
-	PhysicalDisk *physical_disk5 = create_physical_disk(266144ULL, 4096ULL);
+	PhysicalDisk *physical_disk5 = create_physical_disk(metadata, 266144ULL, 4096ULL);
 	PhysicalDiskRange *pd_range5 = create_physical_disk_range(1110ULL, physical_disk5->key, 0ULL, 266144ULL, 266144ULL);
 	add_physical_disk_range_to_physical_disk(physical_disk5, pd_range5);
 
-	PhysicalDisk *physical_disk6 = create_physical_disk(266144ULL, 4096ULL);
+	PhysicalDisk *physical_disk6 = create_physical_disk(metadata, 266144ULL, 4096ULL);
 	PhysicalDiskRange *pd_range61 = create_physical_disk_range(1110ULL, physical_disk6->key, 0ULL, 266143ULL, 266144ULL);
 	PhysicalDiskRange *pd_range62 = create_physical_disk_range(1110ULL, physical_disk6->key, 266144ULL, 532287ULL, 266144ULL);
 	add_physical_disk_range_to_physical_disk(physical_disk6, pd_range61);
@@ -106,23 +108,9 @@ int main()
 
 	char* virtual_disk_name = "my first virtual disk";
 
-	VirtualDisk *virtual_disk1 = create_virtual_disk(2000ULL, virtual_disk_name, VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P);
+	VirtualDisk *virtual_disk1 = create_virtual_disk(metadata, virtual_disk_name, VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P, 1ULL);
 	add_virtual_disk_range_to_virtual_disk(virtual_disk1, vd_range1);
 
-	MetaData *metadata = create_metadata();
-	metadata->n_physical_disks = 6;
-	metadata->physical_disks = malloc(sizeof(PhysicalDisk*) * metadata->n_physical_disks);
-
-	metadata->physical_disks[0] = physical_disk1;
-	metadata->physical_disks[1] = physical_disk2;
-	metadata->physical_disks[2] = physical_disk3;
-	metadata->physical_disks[3] = physical_disk4;
-	metadata->physical_disks[4] = physical_disk5;
-	metadata->physical_disks[5] = physical_disk6;
-
-	metadata->n_virtual_disks = 1;
-	metadata->virtual_disks = malloc(sizeof(VirtualDisk*) * metadata->n_virtual_disks);
-	metadata->virtual_disks[0] = virtual_disk1;
 	//physical_disk_persist(database, &meta_data1);
 
 	print_meta_data(metadata);

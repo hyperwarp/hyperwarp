@@ -109,24 +109,23 @@ int main()
 	VirtualDisk *virtual_disk1 = create_virtual_disk(2000ULL, virtual_disk_name, VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P);
 	add_virtual_disk_range_to_virtual_disk(virtual_disk1, vd_range1);
 
-	MetaData *meta_data1 = (MetaData*)malloc(sizeof(MetaData));
-	meta_data__init(meta_data1);
-	meta_data1->n_physical_disks = 6;
-	meta_data1->physical_disks = malloc(sizeof(PhysicalDisk*) * meta_data1->n_physical_disks);
+	MetaData *metadata = create_metadata();
+	metadata->n_physical_disks = 6;
+	metadata->physical_disks = malloc(sizeof(PhysicalDisk*) * metadata->n_physical_disks);
 
-	meta_data1->physical_disks[0] = physical_disk1;
-	meta_data1->physical_disks[1] = physical_disk2;
-	meta_data1->physical_disks[2] = physical_disk3;
-	meta_data1->physical_disks[3] = physical_disk4;
-	meta_data1->physical_disks[4] = physical_disk5;
-	meta_data1->physical_disks[5] = physical_disk6;
+	metadata->physical_disks[0] = physical_disk1;
+	metadata->physical_disks[1] = physical_disk2;
+	metadata->physical_disks[2] = physical_disk3;
+	metadata->physical_disks[3] = physical_disk4;
+	metadata->physical_disks[4] = physical_disk5;
+	metadata->physical_disks[5] = physical_disk6;
 
-	meta_data1->n_virtual_disks = 1;
-	meta_data1->virtual_disks = malloc(sizeof(VirtualDisk*) * meta_data1->n_virtual_disks);
-	meta_data1->virtual_disks[0] = virtual_disk1;
+	metadata->n_virtual_disks = 1;
+	metadata->virtual_disks = malloc(sizeof(VirtualDisk*) * metadata->n_virtual_disks);
+	metadata->virtual_disks[0] = virtual_disk1;
 	//physical_disk_persist(database, &meta_data1);
 
-	print_meta_data(meta_data1);
+	print_meta_data(metadata);
 
 	free(physical_disk1->physical_disk_ranges);
 	free(physical_disk2->physical_disk_ranges);
@@ -138,8 +137,8 @@ int main()
 	free(vd_range1->ranges);
 	free(virtual_disk1->volume_ranges);
 
-	free(meta_data1->physical_disks);
-	free(meta_data1->virtual_disks);
+	free(metadata->physical_disks);
+	free(metadata->virtual_disks);
 
 /*
 	printf("Wrote MetaData to FDB\n");

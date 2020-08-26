@@ -13,3 +13,5 @@ VirtualDiskRange *create_virtual_disk_range(uint64_t key, uint64_t sector_start,
 VirtualDisk *create_virtual_disk(uint64_t key, char *name, VirtualDisk__ErasureCodeProfile ec_profile);
 
 void add_virtual_disk_range_to_virtual_disk(VirtualDisk* virtual_disk, VirtualDiskRange* range);
+
+MetaData *create_metadata();

@@ -62,3 +62,10 @@ void add_virtual_disk_range_to_virtual_disk(VirtualDisk* virtual_disk, VirtualDi
 	virtual_disk->volume_ranges[last] = range;
 	virtual_disk->n_volume_ranges = last + 1;
 }
+
+MetaData *create_metadata() {
+	MetaData *metadata = (MetaData*)malloc(sizeof(MetaData));
+	meta_data__init(metadata);
+
+	return metadata;
+}

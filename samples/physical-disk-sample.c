@@ -32,22 +32,23 @@ int main()
 	FDBDatabase *database;
 	chk(fdb_create_database(NULL, &database));
 
-	PhysicalDisk physical_disk1 = create_physical_disk(266144ULL, 4096ULL);
-	physical_disk_persist(database, &physical_disk1);
+	PhysicalDisk *physical_disk1 = create_physical_disk(266144ULL, 4096ULL);
+	physical_disk_persist(database, physical_disk1);
 
 	printf("Wrote PhysicalDisk to FDB\n");
-	printf("  Key = %" PRIu64 "\n", physical_disk1.key);
-	printf("  Sector Count = %" PRIu64 "\n", physical_disk1.sector_count);
-	printf("  Sector Size = %" PRIu64 "\n", physical_disk1.sector_size);
+	printf("  Key = %" PRIu64 "\n", physical_disk1->key);
+	printf("  Sector Count = %" PRIu64 "\n", physical_disk1->sector_count);
+	printf("  Sector Size = %" PRIu64 "\n", physical_disk1->sector_size);
 
 
-	PhysicalDisk *physical_disk2 = physical_disk_get(database, physical_disk1.key);
+	PhysicalDisk *physical_disk2 = physical_disk_get(database, physical_disk1->key);
 
 	printf("Read PhysicalDisk from FDB\n");
 	printf("  Key = %" PRIu64 "\n", physical_disk2->key);
 	printf("  Sector Count = %" PRIu64 "\n", physical_disk2->sector_count);
 	printf("  Sector Size = %" PRIu64 "\n", physical_disk2->sector_size);
 
+	physical_disk__free_unpacked(physical_disk1, NULL);
 	physical_disk__free_unpacked(physical_disk2, NULL);
 
 	fdb_database_destroy(database);

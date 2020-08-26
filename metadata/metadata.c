@@ -26,10 +26,12 @@ PhysicalDiskRange *create_physical_disk_range(uint64_t key, uint64_t physical_di
 	return range;
 }
 
-void add_physical_disk_range_to_physical_disk(PhysicalDisk* physical_disk, PhysicalDiskRange* range){
-	physical_disk->n_physical_disk_ranges = 1;
-	physical_disk->physical_disk_ranges = malloc(sizeof(PhysicalDiskRange*));
-	physical_disk->physical_disk_ranges[0] = range;
+void add_physical_disk_range_to_physical_disk(PhysicalDisk* physical_disk, PhysicalDiskRange* range) {
+	size_t last = physical_disk->n_physical_disk_ranges;
+	physical_disk->physical_disk_ranges = realloc(physical_disk->physical_disk_ranges,
+						      sizeof(PhysicalDiskRange*) * (last + 1));
+	physical_disk->physical_disk_ranges[last] = range;
+	physical_disk->n_physical_disk_ranges = last + 1;
 }
 
 VirtualDiskRange *create_virtual_disk_range(uint64_t key, uint64_t sector_start, uint64_t sector_end, uint64_t sector_count) {
@@ -54,7 +56,9 @@ VirtualDisk *create_virtual_disk(uint64_t key, char *name, VirtualDisk__ErasureC
 }
 
 void add_virtual_disk_range_to_virtual_disk(VirtualDisk* virtual_disk, VirtualDiskRange* range) {
-	virtual_disk->n_volume_ranges = 1;
-	virtual_disk->volume_ranges = malloc(sizeof(VirtualDiskRange*));
-	virtual_disk->volume_ranges[0] = range;
+	size_t last = virtual_disk->n_volume_ranges;
+	virtual_disk->volume_ranges = realloc(virtual_disk->volume_ranges,
+					      sizeof(VirtualDiskRange*) * (last + 1));
+	virtual_disk->volume_ranges[last] = range;
+	virtual_disk->n_volume_ranges = last + 1;
 }

@@ -25,6 +25,7 @@ void print_physical_disk(PhysicalDisk* physical_disk) {
 	printf("      Key = %" PRIu64 "\n", physical_disk->key);
 	printf("      Sector Count = %" PRIu64 "\n", physical_disk->sector_count);
 	printf("      Sector Size = %" PRIu64 "\n", physical_disk->sector_size);
+	printf("      Disk ranges allocated = %" PRIu64 "\n", physical_disk->n_physical_disk_ranges);
 }
 
 void print_virtual_disk(VirtualDisk* virtual_disk) {
@@ -87,18 +88,21 @@ int main()
 	add_physical_disk_range_to_physical_disk(physical_disk5, pd_range5);
 
 	PhysicalDisk *physical_disk6 = create_physical_disk(266144ULL, 4096ULL);
-	PhysicalDiskRange *pd_range6 = create_physical_disk_range(1110ULL, physical_disk6->key, 0ULL, 266144ULL, 266144ULL);
-	add_physical_disk_range_to_physical_disk(physical_disk6, pd_range6);
+	PhysicalDiskRange *pd_range61 = create_physical_disk_range(1110ULL, physical_disk6->key, 0ULL, 266143ULL, 266144ULL);
+	PhysicalDiskRange *pd_range62 = create_physical_disk_range(1110ULL, physical_disk6->key, 266144ULL, 532287ULL, 266144ULL);
+	add_physical_disk_range_to_physical_disk(physical_disk6, pd_range61);
+	add_physical_disk_range_to_physical_disk(physical_disk6, pd_range62);
 
 	VirtualDiskRange *vd_range1 = create_virtual_disk_range(2001ULL, 0ULL, 1064576ULL, 1064576ULL);
-	vd_range1->n_ranges = 6;
+	vd_range1->n_ranges = 7;
 	vd_range1->ranges = malloc(sizeof(PhysicalDiskRange*) * vd_range1->n_ranges);
 	vd_range1->ranges[0] = pd_range1;
 	vd_range1->ranges[1] = pd_range2;
 	vd_range1->ranges[2] = pd_range3;
 	vd_range1->ranges[3] = pd_range4;
 	vd_range1->ranges[4] = pd_range5;
-	vd_range1->ranges[5] = pd_range6;
+	vd_range1->ranges[5] = pd_range61;
+	vd_range1->ranges[6] = pd_range62;
 
 	char* virtual_disk_name = "my first virtual disk";
 

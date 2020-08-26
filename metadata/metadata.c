@@ -61,7 +61,7 @@ VirtualDisk *create_virtual_disk(MetaData *metadata,
 
 	virtual_disk->key = 123ULL;
 	virtual_disk->name = (char *)malloc(strlen(name) + 1);
-	memcpy(virtual_disk->name, name, strlen(name) + 1);;
+	memcpy(virtual_disk->name, name, strlen(name) + 1);
 	virtual_disk->ec_profile = ec_profile;
 	virtual_disk->size = size;
 

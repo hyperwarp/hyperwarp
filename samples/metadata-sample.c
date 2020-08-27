@@ -10,6 +10,7 @@
 #define FDB_API_VERSION 620
 #include <foundationdb/fdb_c.h>
 
+#include <util.h>
 #include <metadata.h>
 #include <metadata-foundationdb.h>
 
@@ -18,41 +19,6 @@ void *run_net(void *_unused)
 	chk(fdb_run_network());
 
 	return NULL;
-}
-
-void print_physical_disk(PhysicalDisk* physical_disk) {
-	printf("    PhysicalDisk\n");
-	printf("      Key = %" PRIu64 "\n", physical_disk->key);
-	printf("      Sector Count = %" PRIu64 "\n", physical_disk->sector_count);
-	printf("      Sector Size = %" PRIu64 "\n", physical_disk->sector_size);
-	printf("      Disk ranges allocated = %" PRIu64 "\n", physical_disk->n_ranges);
-}
-
-void print_virtual_disk(VirtualDisk* virtual_disk) {
-	printf("    VirtualDisk\n");
-	printf("      Key = %" PRIu64 "\n", virtual_disk->key);
-	printf("      Name = %s\n", virtual_disk->name);
-	if (virtual_disk->ec_profile >= 0) {
-		printf("      Erasure Code Profile = %d\n", virtual_disk->ec_profile);
-	}
-}
-
-void print_meta_data(MetaData* meta_data) {
-	printf("Printing MetaData\n");
-
-	if (meta_data->n_physical_disks && meta_data->n_physical_disks > 0) {
-		printf("  Printing %" PRIu64 " PhysicalDisks\n", meta_data->n_physical_disks);
-		for (int i = 0; i < meta_data->n_physical_disks; i++) {
-			print_physical_disk(meta_data->physical_disks[i]);
-		}
-	}
-
-	if (meta_data->n_virtual_disks && meta_data->n_virtual_disks > 0) {
-		printf("  Printing %" PRIu64 " VirtualDisks\n", meta_data->n_virtual_disks);
-		for (int i = 0; i < meta_data->n_virtual_disks; i++) {
-			print_virtual_disk(meta_data->virtual_disks[i]);
-		}
-	}
 }
 
 int main()
@@ -97,7 +63,7 @@ int main()
 
 	VirtualDiskRange *vd_range1 = create_virtual_disk_range(2001ULL, 0ULL, 1064576ULL, 1064576ULL);
 	vd_range1->n_ranges = 7;
-	vd_range1->ranges = malloc(sizeof(PhysicalDiskRange*) * vd_range1->n_ranges);
+	vd_range1->ranges = malloc(sizeof(PhysicalDiskRange *) * vd_range1->n_ranges);
 	vd_range1->ranges[0] = pd_range1;
 	vd_range1->ranges[1] = pd_range2;
 	vd_range1->ranges[2] = pd_range3;
@@ -106,14 +72,14 @@ int main()
 	vd_range1->ranges[5] = pd_range61;
 	vd_range1->ranges[6] = pd_range62;
 
-	char* virtual_disk_name = "my first virtual disk";
+	char *virtual_disk_name = "my first virtual disk";
 
 	VirtualDisk *virtual_disk1 = create_virtual_disk(metadata, virtual_disk_name, VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P, 1ULL);
 	add_virtual_disk_range_to_virtual_disk(virtual_disk1, vd_range1);
 
-	//physical_disk_persist(database, &meta_data1);
+	//meta_data_persist(database, &meta_data1);
 
-	print_meta_data(metadata);
+	print_meta_data(metadata, 0);
 
 	free(physical_disk1->ranges);
 	free(physical_disk2->ranges);
@@ -128,7 +94,7 @@ int main()
 	free(metadata->physical_disks);
 	free(metadata->virtual_disks);
 
-/*
+	/*
 	printf("Wrote MetaData to FDB\n");
 	printf("  Key = %" PRIu64 "\n", physical_disk1.key);
 	printf("  Sector Count = %" PRIu64 "\n", physical_disk1.sector_count);

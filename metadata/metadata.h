@@ -7,7 +7,7 @@ PhysicalDisk *create_physical_disk(MetaData *metadata, uint64_t sector_count, ui
 
 PhysicalDiskRange *create_physical_disk_range(uint64_t key, uint64_t physical_disk_key, uint64_t sector_start, uint64_t sector_end, uint64_t sector_count);
 
-void add_physical_disk_range_to_physical_disk(PhysicalDisk* physical_disk, PhysicalDiskRange* range);
+void add_physical_disk_range_to_physical_disk(PhysicalDisk *physical_disk, PhysicalDiskRange *range);
 
 VirtualDiskRange *create_virtual_disk_range(uint64_t key, uint64_t sector_start, uint64_t sector_end, uint64_t sector_count);
 
@@ -15,7 +15,7 @@ VirtualDisk *create_virtual_disk(MetaData *metadata, const char *name, VirtualDi
 
 VirtualDisk *create_and_allocate_virtual_disk(MetaData *metadata, const char *name, VirtualDisk__ErasureCodeProfile ec_profile, uint64_t size);
 
-void add_virtual_disk_range_to_virtual_disk(VirtualDisk* virtual_disk, VirtualDiskRange* range);
+void add_virtual_disk_range_to_virtual_disk(VirtualDisk *virtual_disk, VirtualDiskRange *range);
 
 MetaData *new_metadata();
 

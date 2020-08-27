@@ -45,7 +45,7 @@ void proto_message_persist(FDBDatabase *database, uint64_t key, const ProtobufCM
 	fdb_future_destroy(future);
 	fdb_transaction_destroy(transaction);
 
-	free(buffer);	
+	free(buffer);
 }
 
 /**
@@ -98,7 +98,7 @@ ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint64_t key, c
 void meta_data_persist(FDBDatabase *database, const MetaData *meta_data)
 {
 	assert(meta_data->base.descriptor == &meta_data__descriptor);
-	proto_message_persist(database, meta_data_key, (const ProtobufCMessage*)(meta_data));
+	proto_message_persist(database, meta_data_key, (const ProtobufCMessage *)(meta_data));
 }
 
 /**
@@ -110,7 +110,7 @@ void meta_data_persist(FDBDatabase *database, const MetaData *meta_data)
  */
 MetaData *meta_data_get(FDBDatabase *database)
 {
-	return (MetaData*) proto_message_get(database, meta_data_key, &meta_data__descriptor);
+	return (MetaData *)proto_message_get(database, meta_data_key, &meta_data__descriptor);
 }
 
 /**
@@ -122,7 +122,7 @@ MetaData *meta_data_get(FDBDatabase *database)
 void physical_disk_persist(FDBDatabase *database, const PhysicalDisk *physical_disk)
 {
 	assert(physical_disk->base.descriptor == &physical_disk__descriptor);
-	proto_message_persist(database, physical_disk->key, (const ProtobufCMessage*)(physical_disk));
+	proto_message_persist(database, physical_disk->key, (const ProtobufCMessage *)(physical_disk));
 }
 
 /**
@@ -135,7 +135,7 @@ void physical_disk_persist(FDBDatabase *database, const PhysicalDisk *physical_d
  */
 PhysicalDisk *physical_disk_get(FDBDatabase *database, const uint64_t key)
 {
-	return (PhysicalDisk*) proto_message_get(database, key, &physical_disk__descriptor);
+	return (PhysicalDisk *)proto_message_get(database, key, &physical_disk__descriptor);
 }
 
 /**
@@ -147,7 +147,7 @@ PhysicalDisk *physical_disk_get(FDBDatabase *database, const uint64_t key)
 void virtual_disk_persist(FDBDatabase *database, const VirtualDisk *virtual_disk)
 {
 	assert(virtual_disk->base.descriptor == &virtual_disk__descriptor);
-	proto_message_persist(database, virtual_disk->key, (const ProtobufCMessage*)(virtual_disk));
+	proto_message_persist(database, virtual_disk->key, (const ProtobufCMessage *)(virtual_disk));
 }
 
 /**
@@ -160,5 +160,5 @@ void virtual_disk_persist(FDBDatabase *database, const VirtualDisk *virtual_disk
  */
 VirtualDisk *virtual_disk_get(FDBDatabase *database, const uint64_t key)
 {
-	return (VirtualDisk*) proto_message_get(database, key, &virtual_disk__descriptor);
+	return (VirtualDisk *)proto_message_get(database, key, &virtual_disk__descriptor);
 }

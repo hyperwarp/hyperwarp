@@ -40,7 +40,6 @@ int main()
 	printf("  Sector Count = %" PRIu64 "\n", physical_disk1->sector_count);
 	printf("  Sector Size = %" PRIu64 "\n", physical_disk1->sector_size);
 
-
 	PhysicalDisk *physical_disk2 = physical_disk_get(database, physical_disk1->key);
 
 	printf("Read PhysicalDisk from FDB\n");

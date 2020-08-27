@@ -15,7 +15,7 @@
 # limitations under the License.
 
 macro(add_sample target source)
-    add_executable(${target} ${source})
+    add_executable(${target} ${source} util.h util.c)
     target_link_libraries(${target} pthread)
     target_link_libraries(${target} hyperwarp-metadata)
     target_link_libraries(${target} hyperwarp-metadata-fdb)

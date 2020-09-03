@@ -1,5 +1,5 @@
 # Note: You can use any Debian/Ubuntu based image you want. 
-FROM hyperwarp/build-metadata:latest
+FROM hyperwarp/devcontainer:latest
 
 # Options
 ARG INSTALL_ZSH="true"

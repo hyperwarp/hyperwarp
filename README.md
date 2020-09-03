@@ -82,10 +82,10 @@ $
 git clone git@github.ibm.com:hyperwarp/hyperwarp-metadata.git
 ```
 
-2. From within the cloned folder, pull the development container image for Linux amd64 from [Docker Hub](https://hub.docker.com/r/hyperwarp/build-metadata) and run it while mounting the cloned source code folder into the container.
+2. From within the cloned folder, pull the development container image for Linux amd64 from [Docker Hub](https://hub.docker.com/r/hyperwarp/devcontainer) and run it while mounting the cloned source code folder into the container.
 
 ```bash
-docker run -it -v $(pwd):/root/hyperwarp-metadata hyperwarp/build-metadata:latest
+docker run -it -v $(pwd):/root/hyperwarp-metadata hyperwarp/devcontainer:latest
 ```
 
 2. Build the code as described [above](README.md#build).

@@ -21,3 +21,6 @@ MetaData *new_metadata();
 
 void add_physical_disk(MetaData *metadata, PhysicalDisk *disk);
 void add_virtual_disk(MetaData *metadata, VirtualDisk *disk);
+
+// map a section of a logical disk to a list of underlying virtual disk ranges
+VirtualDiskRange **translate_vdaddress_to_vdranges(VirtualDisk *vdisk, size_t start_address, size_t io_size);

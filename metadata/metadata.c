@@ -3,6 +3,7 @@
 #include <metadata.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 PhysicalDisk *create_physical_disk(MetaData *metadata,
 								   uint64_t sector_count,
@@ -151,11 +152,11 @@ VirtualDisk *create_and_allocate_virtual_disk(MetaData *metadata, const char *na
 	}
 
 	/*
-         * so let's say you need a virtual disk that is 100GiB
-         * we're going to cut that into 100 x 1GB VirtualDiskRanges
-         * then each VirtualDiskRange is going to map to 6xPhysicalDiskRanges
-         * (for 4+2 EC)
-         */
+	 * so let's say you need a virtual disk that is 100GiB
+	 * we're going to cut that into 100 x 1GB VirtualDiskRanges
+	 * then each VirtualDiskRange is going to map to 6xPhysicalDiskRanges
+	 * (for 4+2 EC)
+	 */
 
 	VirtualDisk *virtual_disk = create_virtual_disk(metadata, name, ec_profile, size);
 
@@ -213,4 +214,22 @@ void add_virtual_disk(MetaData *metadata, VirtualDisk *disk)
 									  sizeof(VirtualDisk) * (last + 1));
 	metadata->virtual_disks[last] = disk;
 	metadata->n_virtual_disks = last + 1;
+}
+
+VirtualDiskRange **translate_vdaddress_to_vdranges(VirtualDisk *vdisk, uint64_t start_address, uint64_t io_size) 
+{
+	uint64_t end_address = start_address + io_size - 1;
+	
+	size_t start_index = floor(start_address / SIMPLE_ALLOCATOR_PHYSICAL_DISK_RANGE_SECTOR_COUNT);
+	size_t end_index = ceil(end_address / SIMPLE_ALLOCATOR_PHYSICAL_DISK_RANGE_SECTOR_COUNT);
+
+	size_t range_count = (end_index - start_index) + 1;
+
+	VirtualDiskRange **result = malloc(range_count * sizeof(VirtualDiskRange));
+	for (int i = start_index; i <= end_index; i++)
+	{
+		result[i] = vdisk->ranges[i];
+	}
+
+	return result;
 }

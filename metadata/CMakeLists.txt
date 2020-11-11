@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(hyperwarp-metadata SHARED metadata.h metadata.c)
+add_library(hyperwarp-metadata SHARED metadata.c)
 
 target_link_libraries(hyperwarp-metadata hyperwarp-metadata-model)
 
@@ -23,3 +23,6 @@ target_include_directories(hyperwarp-metadata PUBLIC
                           "${PROJECT_SOURCE_DIR}"
                           "${CMAKE_CURRENT_SOURCE_DIR}"
                           )
+
+set_target_properties(hyperwarp-metadata PROPERTIES PUBLIC_HEADER metadata.h)
+install(TARGETS hyperwarp-metadata LIBRARY PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hyperwarp)

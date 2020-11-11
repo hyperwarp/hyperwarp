@@ -2,11 +2,12 @@
 
 #include <inttypes.h>
 #include <util.h>
-#include <metadata.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+
+#include "metadata.h"
 
 void setup(MetaData *metadata, size_t physical_disk_size, size_t physical_disk_count, size_t virtual_disk_size, size_t virtual_disk_count)
 {

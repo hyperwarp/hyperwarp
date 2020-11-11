@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#include <metadata.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
+#include "metadata.h"
 
 PhysicalDisk *create_physical_disk(MetaData *metadata,
 								   uint64_t sector_count,

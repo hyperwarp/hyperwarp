@@ -18,6 +18,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(hyperwarp-metadata)
 
+include(GNUInstallDirs)
+
 add_subdirectory(metadata-model bin/metadata-model)
 add_subdirectory(metadata-foundationdb bin/metadata-foundationdb)
 add_subdirectory(metadata bin/metadata)

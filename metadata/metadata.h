@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#include <metadata.pb-c.h>
-#include <allocator.h>
+#include "metadata.pb-c.h"
+
+// Physical Disk Range default sector count, assuming 4k devices = 1GiB = 262144
+#define SIMPLE_ALLOCATOR_PHYSICAL_DISK_RANGE_SECTOR_COUNT   262144
 
 PhysicalDisk *create_physical_disk(MetaData *metadata, uint64_t sector_count, uint64_t sector_size);
 

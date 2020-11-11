@@ -10,9 +10,9 @@
 #define FDB_API_VERSION 620
 #include <foundationdb/fdb_c.h>
 
-#include <metadata-foundationdb.h>
-#include <metadata.h>
-#include <util.h>
+#include "util.h"
+#include "metadata.h"
+#include "metadata-foundationdb.h"
 
 void *run_net(void *_unused)
 {

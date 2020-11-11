@@ -1,6 +1,6 @@
 #include <inttypes.h>
 #include <stdio.h>
-#include <util.h>
+#include "util.h"
 
 void print_with_indent(int indent, char *string)
 {

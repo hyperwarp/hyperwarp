@@ -38,6 +38,30 @@ bin/
         physical-disk-sample
 ```
 
+You can run `sudo make install` to install the shared libraries into `/usr/local/lib` and the header files to `/usr/local/include/hyperwarp`.
+
+```bash
+$ sudo make install
+[ 15%] Built target hyperwarp-metadata-model
+[ 26%] Built target hyperwarp-metadata-fdb
+[ 36%] Built target hyperwarp-metadata
+[ 52%] Built target physical-disk-sample
+[ 68%] Built target metadata-sample
+[ 84%] Built target allocation
+[100%] Built target address-lookup
+Install the project...
+-- Install configuration: ""
+-- Up-to-date: /usr/local/lib/libhyperwarp-metadata-model.so
+-- Installing: /usr/local/include/hyperwarp/metadata.pb-c.h
+-- Installing: /usr/local/lib/libhyperwarp-metadata-fdb.so
+-- Set runtime path of "/usr/local/lib/libhyperwarp-metadata-fdb.so" to ""
+-- Installing: /usr/local/include/hyperwarp/metadata-foundationdb.h
+-- Installing: /usr/local/lib/libhyperwarp-metadata.so
+-- Set runtime path of "/usr/local/lib/libhyperwarp-metadata.so" to ""
+-- Installing: /usr/local/include/hyperwarp/metadata.h
+$
+```
+
 ## Run the samples using the development container
 
 ### Using VS Code

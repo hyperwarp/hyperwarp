@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(hyperwarp-metadata-fdb SHARED metadata-foundationdb.h metadata-foundationdb.c)
+add_library(hyperwarp-metadata-fdb SHARED metadata-foundationdb.c)
 target_link_libraries(hyperwarp-metadata-fdb fdb_c)
 target_link_libraries(hyperwarp-metadata-fdb m)
 target_link_libraries(hyperwarp-metadata-fdb rt)
@@ -24,3 +24,6 @@ target_include_directories(hyperwarp-metadata-fdb PUBLIC
                           "${PROJECT_SOURCE_DIR}"
                           "${CMAKE_CURRENT_SOURCE_DIR}"
                           )
+
+set_target_properties(hyperwarp-metadata-fdb PROPERTIES PUBLIC_HEADER metadata-foundationdb.h)
+install(TARGETS hyperwarp-metadata-fdb LIBRARY PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hyperwarp)

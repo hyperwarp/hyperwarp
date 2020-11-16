@@ -15,6 +15,7 @@
 # limitations under the License.
 
 add_library(hyperwarp-metadata-fdb SHARED metadata-foundationdb.c)
+add_custom_command(TARGET hyperwarp-metadata-fdb PRE_BUILD COMMAND astyle ARGS "${CMAKE_CURRENT_SOURCE_DIR}/*.c,*.h")
 target_link_libraries(hyperwarp-metadata-fdb fdb_c)
 target_link_libraries(hyperwarp-metadata-fdb m)
 target_link_libraries(hyperwarp-metadata-fdb rt)

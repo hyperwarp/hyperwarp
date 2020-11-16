@@ -23,3 +23,6 @@ CTestTestfile.cmake
 _deps
 
 bin
+
+# astyle orig files
+*.orig

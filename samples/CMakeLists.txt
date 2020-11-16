@@ -16,6 +16,7 @@
 
 macro(add_sample target source)
     add_executable(${target} ${source} util.h util.c)
+    add_custom_command(TARGET ${target} PRE_BUILD COMMAND astyle ARGS "${CMAKE_CURRENT_SOURCE_DIR}/*.c,*.h")
     target_link_libraries(${target} pthread)
     target_link_libraries(${target} hyperwarp-metadata)
     target_link_libraries(${target} hyperwarp-metadata-fdb)

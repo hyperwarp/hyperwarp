@@ -97,17 +97,25 @@ message NVMfTransport {
     string subsystem_nqn = 6;
 }
 
+message DiskRangeKey {
+    bytes range_key = 1;
+    bytes disk_key = 2;
+}
+
+message DiskRangeSize {
+    uint64 sector_start = 2;
+    uint64 sector_end = 3;
+    uint64 sector_count = 4;
+}
+
 message PhysicalDiskRange {
-    uint64 key = 1;
-    uint64 physical_disk_key = 2;
-    uint64 sector_start = 3;
-    uint64 sector_end = 4;
-    uint64 sector_count = 5;
+    DiskRangeKey key = 1;
+    DiskRangeSize size = 2;
 }
 
 message PhysicalDisk {
     // unique identifier of this physical disk
-    uint64 key = 1;
+    bytes key = 1;
 
     NVMfTransport transport = 2;
 
@@ -118,36 +126,29 @@ message PhysicalDisk {
     uint64 sector_count = 4;
 
     uint64 size = 5;
-    uint64 unallocated_sector_count = 6;
-    uint64 allocated_sector_count = 7;
 
-    repeated PhysicalDiskRange ranges = 8;
+    repeated DiskRangeKey unallocated_ranges = 6;
+    repeated DiskRangeKey allocated_ranges = 7;
 }
 
 message VirtualDiskRange {
     // unique identifier of this virtual disk range
-    uint64 key = 1;
+    DiskRangeKey key = 1;
 
-    // the key of the virtual disk this range belongs to
-    uint64 virtual_disk_key = 2;
-
-    uint64 sector_start = 3;
-    uint64 sector_end = 4;
-    uint64 sector_count = 5;
+    DiskRangeSize size = 2;
 
     // the physical disk ranges containing data and parity for this virtual disk range
-    repeated PhysicalDiskRange ranges = 6;
+    repeated DiskRangeKey ranges = 3;
 }
 
 message VirtualDisk {
     enum ErasureCodeProfile {
         EC_4_2P = 0;
         EC_8_2P = 1;
-        EC_10_2P = 2;
     }
 
     // unique identifier of this virtual disk
-    uint64 key = 1;
+    bytes key = 1;
 
     // name of this virtual disk
     string name = 2;
@@ -162,7 +163,8 @@ message VirtualDisk {
     repeated VirtualDiskRange ranges = 5;
 }
 
-message MetaData {
+message Metadata {
     repeated PhysicalDisk physical_disks = 1;
-    repeated VirtualDisk virtual_disks = 2;
+    repeated PhysicalDiskRange physical_disk_ranges = 2;
+    repeated VirtualDisk virtual_disks = 3;
 }

@@ -17,7 +17,7 @@
 add_library(hyperwarp-metadata SHARED metadata.c)
 add_custom_command(TARGET hyperwarp-metadata PRE_BUILD COMMAND astyle ARGS "${CMAKE_CURRENT_SOURCE_DIR}/*.c,*.h")
 
-target_link_libraries(hyperwarp-metadata hyperwarp-metadata-model)
+target_link_libraries(hyperwarp-metadata hyperwarp-metadata-model uuid)
 
 target_include_directories(hyperwarp-metadata PUBLIC
                           "${PROJECT_BINARY_DIR}"

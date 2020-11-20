@@ -1,28 +1,32 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
+#ifndef HYPERWARP_METADATA_INCLUDED
+#define HYPERWARP_METADATA_INCLUDED
+
 #include "metadata.pb-c.h"
 
-// Physical Disk Range default sector count, assuming 4k devices = 1GiB = 262144
-#define SIMPLE_ALLOCATOR_PHYSICAL_DISK_RANGE_SECTOR_COUNT   262144
+typedef struct _Allocator Allocator;
 
-PhysicalDisk *create_physical_disk(MetaData *metadata, uint64_t sector_count, uint64_t sector_size);
+struct _Allocator {
+    VirtualDisk__ErasureCodeProfile ec_profile;
+    size_t n;
+    size_t p;
+    size_t virtual_disk_range_sector_count;
+    size_t physical_disk_range_sector_count;
+    size_t sector_size;
+};
 
-PhysicalDiskRange *create_physical_disk_range(uint64_t key, uint64_t physical_disk_key, uint64_t sector_start, uint64_t sector_end, uint64_t sector_count);
+Allocator *create_allocator(VirtualDisk__ErasureCodeProfile ec_profile);
 
-void add_physical_disk_range_to_physical_disk(PhysicalDisk *physical_disk, PhysicalDiskRange *range);
+Metadata *new_metadata();
 
-VirtualDiskRange *create_virtual_disk_range(uint64_t key, uint64_t sector_start, uint64_t sector_end, uint64_t sector_count);
+NVMfTransport *create_nvmf_transport(NVMfTransport__NVMfTransportType type, NVMfTransport__NVMfAddressFamily address_family, char *address, char *service_id, char *subsystem_nqn);
 
-VirtualDisk *create_virtual_disk(MetaData *metadata, const char *name, VirtualDisk__ErasureCodeProfile ec_profile, uint64_t size);
+PhysicalDisk *create_physical_disk(Metadata *metadata, NVMfTransport *transport, uint64_t sector_count, uint64_t sector_size, Allocator *allocator);
 
-VirtualDisk *create_and_allocate_virtual_disk(MetaData *metadata, const char *name, VirtualDisk__ErasureCodeProfile ec_profile, uint64_t size);
-
-void add_virtual_disk_range_to_virtual_disk(VirtualDisk *virtual_disk, VirtualDiskRange *range);
-
-MetaData *new_metadata();
-
-void add_physical_disk(MetaData *metadata, PhysicalDisk *disk);
-void add_virtual_disk(MetaData *metadata, VirtualDisk *disk);
+VirtualDisk *create_virtual_disk(Metadata *metadata, const char *name, uint64_t size, Allocator *allocator);
 
 // map a section of a logical disk to a list of underlying virtual disk ranges
-VirtualDiskRange **translate_vdaddress_to_vdranges(VirtualDisk *vdisk, size_t start_address, size_t io_size);
+VirtualDiskRange **translate_vdaddress_to_vdranges(Allocator *allocator, VirtualDisk *vdisk, size_t start_address, size_t io_size);
+
+#endif

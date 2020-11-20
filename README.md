@@ -35,23 +35,20 @@ bin/
     metadata-model/
         libhyperwarp-metadata-model.so
     samples/
-        physical-disk-sample
+        metadata-sample
 ```
 
 You can run `sudo make install` to install the shared libraries into `/usr/local/lib` and the header files to `/usr/local/include/hyperwarp`.
 
 ```bash
 $ sudo make install
-[ 15%] Built target hyperwarp-metadata-model
-[ 26%] Built target hyperwarp-metadata-fdb
-[ 36%] Built target hyperwarp-metadata
-[ 52%] Built target physical-disk-sample
-[ 68%] Built target metadata-sample
-[ 84%] Built target allocation
-[100%] Built target address-lookup
+[ 30%] Built target hyperwarp-metadata-model
+[ 50%] Built target hyperwarp-metadata-fdb
+[ 70%] Built target hyperwarp-metadata
+[100%] Built target metadata-sample
 Install the project...
--- Install configuration: ""
--- Up-to-date: /usr/local/lib/libhyperwarp-metadata-model.so
+-- Install configuration: "Debug"
+-- Installing: /usr/local/lib/libhyperwarp-metadata-model.so
 -- Installing: /usr/local/include/hyperwarp/metadata.pb-c.h
 -- Installing: /usr/local/lib/libhyperwarp-metadata-fdb.so
 -- Set runtime path of "/usr/local/lib/libhyperwarp-metadata-fdb.so" to ""
@@ -82,18 +79,39 @@ $
 
 5. Start a local FoundationDB server by running `sudo service foundationdb start` inside the container.
 
-6. Run the samples, e.g. `./bin/samples/physical-disk-sample`
+6. Run the samples, e.g. `./bin/samples/metadata-sample`
 
 ```bash
-$ ./bin/samples/physical-disk-sample
-Wrote PhysicalDisk to FDB
-  Key = 1234567890
-  Sector Count = 266144
-  Sector Size = 4096
-Read PhysicalDisk from FDB
-  Key = 1234567890
-  Sector Count = 266144
-  Sector Size = 4096
+$ ./bin/samples/metadata-sample
+Printing MetaData
+  Printing 10 PhysicalDisks
+    PhysicalDisk
+      Key = 8473c628-dd82-4517-83e1-d6e4289eee27
+      Sector Count = 266144
+      Sector Size = 4096
+      NQN = nqn.2020-11.com.github.hyperwarp:cnode7
+      Disk ranges unallocated = 1
+      Disk ranges allocated = 3
+    PhysicalDiskRanges
+      unallocated
+        8473c628-dd82-4517-83e1-d6e4289eee27 / c1536828-ba22-411a-858a-e87a63811dfd
+      allocated
+        8473c628-dd82-4517-83e1-d6e4289eee27 / a59ca1fa-8379-444d-ad65-8d15c4c3db2d
+        8473c628-dd82-4517-83e1-d6e4289eee27 / 7fe22dcf-6fc5-4daa-aaa8-db2b55c9b69a
+        8473c628-dd82-4517-83e1-d6e4289eee27 / be46b631-005d-4a0f-ac92-dc3f2828eb1a
+    ...
+  PhysicalDisks END
+  Printing 2 VirtualDisks
+    VirtualDisk
+      Key = c626c6f2-49ec-4f36-bd08-4b0703d9075b
+      Name = vdisk1
+      Size = 3 GB
+      Erasure Code Profile = EC_4_2P
+      VirtualDiskRanges
+        c626c6f2-49ec-4f36-bd08-4b0703d9075b / 56afb3ce-81c6-43b8-8018-c054fb3696ba
+          PhysicalDiskRanges
+          ...
+  VirtualDisks END
 Tada!
 $
 ```
@@ -113,19 +131,40 @@ docker run -it -v $(pwd):/root/hyperwarp-metadata hyperwarp/devcontainer:latest
 ```
 
 2. Build the code as described [above](README.md#build).
-3. Start a local FoundationDB server by running `service foundationdb start` inside the container.
-4. Run the samples, e.g. `./bin/samples/physical-disk-sample`
+3. Start a local FoundationDB server by running `sudo service foundationdb start` inside the container.
+4. Run the samples, e.g. `./bin/samples/metadata-sample`
 
 ```bash
-$ ./bin/samples/physical-disk-sample
-Wrote PhysicalDisk to FDB
-  Key = 1234567890
-  Sector Count = 266144
-  Sector Size = 4096
-Read PhysicalDisk from FDB
-  Key = 1234567890
-  Sector Count = 266144
-  Sector Size = 4096
+$ ./bin/samples/metadata-sample
+Printing MetaData
+  Printing 10 PhysicalDisks
+    PhysicalDisk
+      Key = 8473c628-dd82-4517-83e1-d6e4289eee27
+      Sector Count = 266144
+      Sector Size = 4096
+      NQN = nqn.2020-11.com.github.hyperwarp:cnode7
+      Disk ranges unallocated = 1
+      Disk ranges allocated = 3
+    PhysicalDiskRanges
+      unallocated
+        8473c628-dd82-4517-83e1-d6e4289eee27 / c1536828-ba22-411a-858a-e87a63811dfd
+      allocated
+        8473c628-dd82-4517-83e1-d6e4289eee27 / a59ca1fa-8379-444d-ad65-8d15c4c3db2d
+        8473c628-dd82-4517-83e1-d6e4289eee27 / 7fe22dcf-6fc5-4daa-aaa8-db2b55c9b69a
+        8473c628-dd82-4517-83e1-d6e4289eee27 / be46b631-005d-4a0f-ac92-dc3f2828eb1a
+    ...
+  PhysicalDisks END
+  Printing 2 VirtualDisks
+    VirtualDisk
+      Key = c626c6f2-49ec-4f36-bd08-4b0703d9075b
+      Name = vdisk1
+      Size = 3 GB
+      Erasure Code Profile = EC_4_2P
+      VirtualDiskRanges
+        c626c6f2-49ec-4f36-bd08-4b0703d9075b / 56afb3ce-81c6-43b8-8018-c054fb3696ba
+          PhysicalDiskRanges
+          ...
+  VirtualDisks END
 Tada!
 $
 ```

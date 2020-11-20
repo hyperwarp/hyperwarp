@@ -18,6 +18,10 @@ cmake_minimum_required(VERSION 3.10)
 
 project(hyperwarp-metadata)
 
+# TODO: turn debugging off once we have a stable code base
+# CAUTION: setting this to RelWithDebInfo seems to break threads on GCC 9
+set(CMAKE_BUILD_TYPE Debug)
+
 include(GNUInstallDirs)
 
 add_subdirectory(metadata-model bin/metadata-model)

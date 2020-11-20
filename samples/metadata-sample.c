@@ -33,82 +33,60 @@ int main()
     FDBDatabase *database;
     chk(fdb_create_database(NULL, &database));
 
-    MetaData *metadata = new_metadata();
+    Metadata *metadata = new_metadata();
+    Allocator *allocator = create_allocator(VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P);
 
-    PhysicalDisk *physical_disk1 = create_physical_disk(metadata, 266144ULL, 4096ULL);
-    PhysicalDiskRange *pd_range1 = create_physical_disk_range(1110ULL, physical_disk1->key, 0ULL, 266144ULL, 266144ULL);
-    add_physical_disk_range_to_physical_disk(physical_disk1, pd_range1);
+    NVMfTransport__NVMfTransportType type = NVMF_TRANSPORT__NVMF_TRANSPORT_TYPE__TRTYPE_TCP;
+    NVMfTransport__NVMfAddressFamily address_family = NVMF_TRANSPORT__NVMF_ADDRESS_FAMILY__ADRFAM_IPV4;
+    char *address = "127.0.0.1";
 
-    PhysicalDisk *physical_disk2 = create_physical_disk(metadata, 266144ULL, 4096ULL);
-    PhysicalDiskRange *pd_range2 = create_physical_disk_range(1110ULL, physical_disk2->key, 0ULL, 266144ULL, 266144ULL);
-    add_physical_disk_range_to_physical_disk(physical_disk2, pd_range2);
+    NVMfTransport *transport1 = create_nvmf_transport(type, address_family, address, "4420", "nqn.2020-11.com.github.hyperwarp:cnode1");
+    PhysicalDisk *physical_disk1 = create_physical_disk(metadata, transport1, 266144ULL, 4096ULL, allocator);
 
-    PhysicalDisk *physical_disk3 = create_physical_disk(metadata, 266144ULL, 4096ULL);
-    PhysicalDiskRange *pd_range3 = create_physical_disk_range(1110ULL, physical_disk3->key, 0ULL, 266144ULL, 266144ULL);
-    add_physical_disk_range_to_physical_disk(physical_disk3, pd_range3);
+    NVMfTransport *transport2 = create_nvmf_transport(type, address_family, address, "4421", "nqn.2020-11.com.github.hyperwarp:cnode2");
+    PhysicalDisk *physical_disk2 = create_physical_disk(metadata, transport2, 266144ULL, 4096ULL, allocator);
 
-    PhysicalDisk *physical_disk4 = create_physical_disk(metadata, 266144ULL, 4096ULL);
-    PhysicalDiskRange *pd_range4 = create_physical_disk_range(1110ULL, physical_disk4->key, 0ULL, 266144ULL, 266144ULL);
-    add_physical_disk_range_to_physical_disk(physical_disk4, pd_range4);
+    NVMfTransport *transport3 = create_nvmf_transport(type, address_family, address, "4422", "nqn.2020-11.com.github.hyperwarp:cnode3");
+    PhysicalDisk *physical_disk3 = create_physical_disk(metadata, transport3, 266144ULL, 4096ULL, allocator);
 
-    PhysicalDisk *physical_disk5 = create_physical_disk(metadata, 266144ULL, 4096ULL);
-    PhysicalDiskRange *pd_range5 = create_physical_disk_range(1110ULL, physical_disk5->key, 0ULL, 266144ULL, 266144ULL);
-    add_physical_disk_range_to_physical_disk(physical_disk5, pd_range5);
+    NVMfTransport *transport4 = create_nvmf_transport(type, address_family, address, "4423", "nqn.2020-11.com.github.hyperwarp:cnode4");
+    PhysicalDisk *physical_disk4 = create_physical_disk(metadata, transport4, 266144ULL, 4096ULL, allocator);
 
-    PhysicalDisk *physical_disk6 = create_physical_disk(metadata, 266144ULL, 4096ULL);
-    PhysicalDiskRange *pd_range61 = create_physical_disk_range(1110ULL, physical_disk6->key, 0ULL, 266143ULL, 266144ULL);
-    PhysicalDiskRange *pd_range62 = create_physical_disk_range(1110ULL, physical_disk6->key, 266144ULL, 532287ULL, 266144ULL);
-    add_physical_disk_range_to_physical_disk(physical_disk6, pd_range61);
-    add_physical_disk_range_to_physical_disk(physical_disk6, pd_range62);
+    NVMfTransport *transport5 = create_nvmf_transport(type, address_family, address, "4424", "nqn.2020-11.com.github.hyperwarp:cnode5");
+    PhysicalDisk *physical_disk5 = create_physical_disk(metadata, transport5, 266144ULL, 4096ULL, allocator);
 
-    VirtualDiskRange *vd_range1 = create_virtual_disk_range(2001ULL, 0ULL, 1064576ULL, 1064576ULL);
-    vd_range1->n_ranges = 7;
-    vd_range1->ranges = malloc(sizeof(PhysicalDiskRange *) * vd_range1->n_ranges);
-    vd_range1->ranges[0] = pd_range1;
-    vd_range1->ranges[1] = pd_range2;
-    vd_range1->ranges[2] = pd_range3;
-    vd_range1->ranges[3] = pd_range4;
-    vd_range1->ranges[4] = pd_range5;
-    vd_range1->ranges[5] = pd_range61;
-    vd_range1->ranges[6] = pd_range62;
+    NVMfTransport *transport6 = create_nvmf_transport(type, address_family, address, "4425", "nqn.2020-11.com.github.hyperwarp:cnode6");
+    PhysicalDisk *physical_disk6 = create_physical_disk(metadata, transport6, 266144ULL, 4096ULL, allocator);
 
-    char *virtual_disk_name = "my first virtual disk";
+    NVMfTransport *transport7 = create_nvmf_transport(type, address_family, address, "4426", "nqn.2020-11.com.github.hyperwarp:cnode7");
+    PhysicalDisk *physical_disk7 = create_physical_disk(metadata, transport7, 266144ULL, 4096ULL, allocator);
 
-    VirtualDisk *virtual_disk1 = create_virtual_disk(metadata, virtual_disk_name, VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P, 1ULL);
-    add_virtual_disk_range_to_virtual_disk(virtual_disk1, vd_range1);
+    NVMfTransport *transport8 = create_nvmf_transport(type, address_family, address, "4427", "nqn.2020-11.com.github.hyperwarp:cnode8");
+    PhysicalDisk *physical_disk8 = create_physical_disk(metadata, transport8, 266144ULL, 4096ULL, allocator);
 
-    //meta_data_persist(database, &meta_data1);
+    NVMfTransport *transport9 = create_nvmf_transport(type, address_family, address, "4428", "nqn.2020-11.com.github.hyperwarp:cnode9");
+    PhysicalDisk *physical_disk9 = create_physical_disk(metadata, transport9, 266144ULL, 4096ULL, allocator);
 
-    print_meta_data(metadata, 0);
+    NVMfTransport *transport10 = create_nvmf_transport(type, address_family, address, "4429", "nqn.2020-11.com.github.hyperwarp:cnode10");
+    PhysicalDisk *physical_disk10 = create_physical_disk(metadata, transport10, 266144ULL, 4096ULL, allocator);
 
-    free(physical_disk1->ranges);
-    free(physical_disk2->ranges);
-    free(physical_disk3->ranges);
-    free(physical_disk4->ranges);
-    free(physical_disk5->ranges);
-    free(physical_disk6->ranges);
 
-    free(vd_range1->ranges);
-    free(virtual_disk1->ranges);
+    VirtualDisk *virtual_disk1 = create_virtual_disk(metadata, "vdisk1", 3ULL, allocator);
+    VirtualDisk *virtual_disk2 = create_virtual_disk(metadata, "vdisk2", 3ULL, allocator);
 
-    free(metadata->physical_disks);
-    free(metadata->virtual_disks);
+    print_metadata(metadata, 0);
 
-    /*
+    metadata_persist(database, metadata);
     printf("Wrote MetaData to FDB\n");
-    printf("  Key = %" PRIu64 "\n", physical_disk1.key);
-    printf("  Sector Count = %" PRIu64 "\n", physical_disk1.sector_count);
-    printf("  Sector Size = %" PRIu64 "\n", physical_disk1.sector_size);
 
-    PhysicalDisk *physical_disk2 = physical_disk_get(database, physical_disk1.key);
+    free(metadata);
 
-    printf("Read PhysicalDisk from FDB\n");
-    printf("  Key = %" PRIu64 "\n", physical_disk2->key);
-    printf("  Sector Count = %" PRIu64 "\n", physical_disk2->sector_count);
-    printf("  Sector Size = %" PRIu64 "\n", physical_disk2->sector_size);
+    metadata = metadata_get(database);
 
-    physical_disk__free_unpacked(physical_disk2, NULL);
-    */
+    print_metadata(metadata, 0);
+
+    metadata__free_unpacked(metadata, NULL);
+
     fdb_database_destroy(database);
 
     chk(fdb_stop_network());

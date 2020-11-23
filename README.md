@@ -1,4 +1,6 @@
-# Hyperwarp Metadata
+# Hyperwarp Storage Platform
+
+![CMake](https://github.com/hyperwarp/hyperwarp/workflows/CMake/badge.svg)
 
 ## Dependencies
 

@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
+#ifndef HYPERWARP_METADATA_FDB_INCLUDED
+#define HYPERWARP_METADATA_FDB_INCLUDED
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -80,3 +83,5 @@ void virtual_disk_persist(FDBDatabase *database, VirtualDisk *virtual_disk);
  * \retval NULL if the VirtualDisk could not be found or if there was an error unpacking
  */
 VirtualDisk *virtual_disk_get(FDBDatabase *database, ProtobufCBinaryData *key);
+
+#endif

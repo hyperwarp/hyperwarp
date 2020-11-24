@@ -79,7 +79,9 @@ int main()
     metadata_persist(database, metadata);
     printf("Wrote MetaData to FDB\n");
 
-    free(metadata);
+    metadata__free_unpacked(metadata, NULL);
+    allocator = NULL;
+    free(allocator);
 
     metadata = metadata_get(database);
 

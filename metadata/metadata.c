@@ -131,17 +131,41 @@ NVMfTransport *_new_nvmf_transport()
     return transport;
 }
 
+char *_memcpy_from_str(char *src) {
+    char *dest = (char *)malloc(strlen(src) + 1);
+    memcpy(dest, src, strlen(src) + 1);
+    return dest;
+}
+
 NVMfTransport *create_nvmf_transport(NVMfTransport__NVMfTransportType type, NVMfTransport__NVMfAddressFamily address_family, char *address, char *service_id, char *subsystem_nqn)
 {
     NVMfTransport *transport = _new_nvmf_transport();
 
     transport->type = type;
     transport->address_family = address_family;
-    transport->address = address;
-    transport->service_id = service_id;
-    transport->subsystem_nqn = subsystem_nqn;
+
+    transport->address = _memcpy_from_str(address);
+    transport->service_id = _memcpy_from_str(service_id);
+    transport->subsystem_nqn = _memcpy_from_str(subsystem_nqn);
 
     return transport;
+}
+
+DiskRangeKey *_new_disk_range_key() {
+    DiskRangeKey *dest = malloc(sizeof(DiskRangeKey));
+    disk_range_key__init(dest);
+    return dest;
+}
+
+void _memcpy_protobufcbinary(ProtobufCBinaryData *dest, ProtobufCBinaryData *src) {
+    dest->data = malloc(src->len);
+    memcpy(dest->data, src->data, src->len);
+    dest->len = src->len;
+}
+
+void _memcpy_disk_range_key(DiskRangeKey *dest, DiskRangeKey *src) {
+    _memcpy_protobufcbinary(&dest->disk_key, &src->disk_key);
+    _memcpy_protobufcbinary(&dest->range_key, &src->range_key);
 }
 
 void _add_unallocated_physical_disk_range(PhysicalDisk *physical_disk, PhysicalDiskRange *range)
@@ -149,8 +173,10 @@ void _add_unallocated_physical_disk_range(PhysicalDisk *physical_disk, PhysicalD
     size_t last = physical_disk->n_unallocated_ranges;
     physical_disk->unallocated_ranges = realloc(physical_disk->unallocated_ranges,
                                         sizeof(DiskRangeKey *) * (last + 1));
-    physical_disk->unallocated_ranges[last] = malloc(sizeof(DiskRangeKey));
-    memcpy(physical_disk->unallocated_ranges[last], range->key, sizeof(DiskRangeKey));
+
+    physical_disk->unallocated_ranges[last] = _new_disk_range_key();
+    _memcpy_disk_range_key(physical_disk->unallocated_ranges[last], range->key);
+
     physical_disk->n_unallocated_ranges = last + 1;
 }
 
@@ -159,8 +185,7 @@ void _add_allocated_physical_disk_range(PhysicalDisk *physical_disk, DiskRangeKe
     size_t last = physical_disk->n_allocated_ranges;
     physical_disk->allocated_ranges = realloc(physical_disk->allocated_ranges,
                                       sizeof(DiskRangeKey *) * (last + 1));
-    physical_disk->allocated_ranges[last] = malloc(sizeof(DiskRangeKey));
-    memcpy(physical_disk->allocated_ranges[last], range, sizeof(DiskRangeKey));
+    physical_disk->allocated_ranges[last] = range;
     physical_disk->n_allocated_ranges = last + 1;
 }
 
@@ -170,10 +195,8 @@ void _initialize_disk_range_size(DiskRangeSize *size, uint64_t sector_count, int
     size->sector_end = ((disk_index + 1) * sector_count) - 1;
 }
 
-void _generate_and_set_disk_range_key(DiskRangeKey *key, ProtobufCBinaryData *parent_disk_key) {
-    key->disk_key.data = realloc(key->disk_key.data, sizeof(uuid_t));
-    memcpy(key->disk_key.data, parent_disk_key->data, sizeof(uuid_t));
-    key->disk_key.len = sizeof(uuid_t);
+void _generate_and_set_disk_range_key(DiskRangeKey *key, ProtobufCBinaryData parent_disk_key) {
+    _memcpy_protobufcbinary(&key->disk_key, &parent_disk_key);
     _generate_and_set_uuid(&key->range_key);
 }
 
@@ -183,7 +206,7 @@ PhysicalDiskRange *_initialize_next_physical_disk_range(Metadata *metadata,
         int disk_index)
 {
     PhysicalDiskRange *range = _new_physical_disk_range();
-    _generate_and_set_disk_range_key(range->key, &disk->key);
+    _generate_and_set_disk_range_key(range->key, disk->key);
     _initialize_disk_range_size(range->size, allocator->physical_disk_range_sector_count, disk_index);
     _add_physical_disk_range(metadata, range);
     _add_unallocated_physical_disk_range(disk, range);
@@ -222,7 +245,7 @@ PhysicalDisk *create_physical_disk(Metadata *metadata, NVMfTransport *transport,
     return physical_disk;
 }
 
-VirtualDisk *_new_virtual_disk(const char *name,
+VirtualDisk *_new_virtual_disk(char *name,
                                VirtualDisk__ErasureCodeProfile ec_profile,
                                uint64_t size)
 {
@@ -230,8 +253,7 @@ VirtualDisk *_new_virtual_disk(const char *name,
     virtual_disk__init(virtual_disk);
 
     _generate_and_set_uuid(&virtual_disk->key);
-    virtual_disk->name = (char *)malloc(strlen(name) + 1);
-    memcpy(virtual_disk->name, name, strlen(name) + 1);
+    virtual_disk->name = _memcpy_from_str(name);
     virtual_disk->ec_profile = ec_profile;
     virtual_disk->size = size;
 
@@ -256,7 +278,7 @@ VirtualDiskRange *_create_virtual_disk_range(Allocator *allocator, ProtobufCBina
 {
     VirtualDiskRange *vd_range = _new_virtual_disk_range();
 
-    _generate_and_set_disk_range_key(vd_range->key, &disk_key);
+    _generate_and_set_disk_range_key(vd_range->key, disk_key);
     _initialize_disk_range_size(vd_range->size, allocator->virtual_disk_range_sector_count, disk_size);
 
     return vd_range;
@@ -265,24 +287,24 @@ VirtualDiskRange *_create_virtual_disk_range(Allocator *allocator, ProtobufCBina
 void _add_physical_disk_range_to_virtual_disk_range(VirtualDiskRange *vdr, DiskRangeKey *pdr)
 {
     size_t last = vdr->n_ranges;
-    vdr->ranges = realloc(vdr->ranges,
-                          sizeof(DiskRangeKey *) * (last + 1));
-    vdr->ranges[last] = pdr;
+    vdr->ranges = realloc(vdr->ranges, sizeof(DiskRangeKey *) * (last + 1));
+    vdr->ranges[last] = _new_disk_range_key();
+    _memcpy_disk_range_key(vdr->ranges[last], pdr);
+
     vdr->n_ranges = last + 1;
 }
 
 DiskRangeKey* _allocate_next_physical_disk_range(PhysicalDisk *physical_disk, Allocator *allocator) {
-    DiskRangeKey* range = physical_disk->unallocated_ranges[0];
+    DiskRangeKey* range = _new_disk_range_key();
+    _memcpy_disk_range_key(range, physical_disk->unallocated_ranges[0]);
     _add_allocated_physical_disk_range(physical_disk, range);
     for (int i = 0; i < physical_disk->n_unallocated_ranges; i++) {
         physical_disk->unallocated_ranges[i] = physical_disk->unallocated_ranges[i+1];
     }
 
     physical_disk->n_unallocated_ranges--;
-    if (physical_disk->n_unallocated_ranges > 0) {
+    if (physical_disk->n_unallocated_ranges >= 0) {
         physical_disk->unallocated_ranges = realloc(physical_disk->unallocated_ranges, sizeof(DiskRangeKey *) * physical_disk->n_unallocated_ranges);
-    } else {
-        free(physical_disk->unallocated_ranges);
     }
 
     return range;
@@ -297,7 +319,7 @@ void _add_virtual_disk_range_to_virtual_disk(VirtualDisk *virtual_disk, VirtualD
     virtual_disk->n_ranges = last + 1;
 }
 
-VirtualDisk *create_virtual_disk(Metadata *metadata, const char *name, uint64_t size, Allocator *allocator)
+VirtualDisk *create_virtual_disk(Metadata *metadata, char *name, uint64_t size, Allocator *allocator)
 {
     size_t n_physical_ranges = (allocator->n + allocator->p);
 

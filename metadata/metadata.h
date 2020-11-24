@@ -24,7 +24,7 @@ NVMfTransport *create_nvmf_transport(NVMfTransport__NVMfTransportType type, NVMf
 
 PhysicalDisk *create_physical_disk(Metadata *metadata, NVMfTransport *transport, uint64_t sector_count, uint64_t sector_size, Allocator *allocator);
 
-VirtualDisk *create_virtual_disk(Metadata *metadata, const char *name, uint64_t size, Allocator *allocator);
+VirtualDisk *create_virtual_disk(Metadata *metadata, char *name, uint64_t size, Allocator *allocator);
 
 // map a section of a logical disk to a list of underlying virtual disk ranges
 VirtualDiskRange **translate_vdaddress_to_vdranges(Allocator *allocator, VirtualDisk *vdisk, size_t start_address, size_t io_size);

@@ -11,6 +11,20 @@ char *_get_key_as_string(ProtobufCBinaryData *key) {
     return key_str;
 }
 
+void print_uuid(ProtobufCBinaryData *key, int indent) {
+    char *disk_key = _get_key_as_string(key);
+    printf("%*sKey = %s\n", indent, "", disk_key);
+    free(disk_key);
+}
+
+void print_disk_range_key(DiskRangeKey *key, int indent) {
+    char *disk_key = _get_key_as_string(&key->disk_key);
+    char *range_key = _get_key_as_string(&key->range_key);
+    printf("%*s%s / %s\n", indent + 4, "", disk_key, range_key);
+    free(disk_key);
+    free(range_key);
+}
+
 void print_with_indent(int indent, char *string)
 {
     printf("%*s%s", indent, "", string);
@@ -23,7 +37,7 @@ void print_nvmf_transport(NVMfTransport *transport, int indent) {
 void print_physical_disk(PhysicalDisk *physical_disk, int indent)
 {
     printf("%*sPhysicalDisk\n", indent, "");
-    printf("%*sKey = %s\n", (indent + 2), "", _get_key_as_string(&physical_disk->key));
+    print_uuid(&physical_disk->key, indent+2);
     printf("%*sSector Count = %" PRIu64 "\n", (indent + 2), "", physical_disk->sector_count);
     printf("%*sSector Size = %" PRIu64 "\n", (indent + 2), "", physical_disk->sector_size);
     print_nvmf_transport(physical_disk->transport, (indent));
@@ -34,14 +48,14 @@ void print_physical_disk(PhysicalDisk *physical_disk, int indent)
     if (physical_disk->n_unallocated_ranges && physical_disk->n_unallocated_ranges > 0) {
         printf("%*sunallocated\n", indent + 2, "");
         for (int i = 0; i < physical_disk->n_unallocated_ranges; i++) {
-            printf("%*s%s / %s\n", indent + 4, "", _get_key_as_string(&physical_disk->unallocated_ranges[i]->disk_key), _get_key_as_string(&physical_disk->unallocated_ranges[i]->range_key));
+            print_disk_range_key(physical_disk->unallocated_ranges[i], indent + 4);
         }
     }
 
     if (physical_disk->n_allocated_ranges && physical_disk->n_allocated_ranges > 0) {
         printf("%*sallocated\n", indent + 2, "");
         for (int i = 0; i < physical_disk->n_allocated_ranges; i++) {
-            printf("%*s%s / %s\n", indent + 4, "", _get_key_as_string(&physical_disk->allocated_ranges[i]->disk_key), _get_key_as_string(&physical_disk->allocated_ranges[i]->range_key));
+            print_disk_range_key(physical_disk->allocated_ranges[i], indent + 4);
         }
     }
 }
@@ -49,7 +63,7 @@ void print_physical_disk(PhysicalDisk *physical_disk, int indent)
 void print_virtual_disk(VirtualDisk *virtual_disk, int indent)
 {
     printf("%*sVirtualDisk\n", indent, "");
-    printf("%*sKey = %s\n", (indent + 2), "", _get_key_as_string(&virtual_disk->key));
+    print_uuid(&virtual_disk->key, indent+2);
     printf("%*sName = %s\n", (indent + 2), "", virtual_disk->name);
     printf("%*sSize = %" PRIu64 " GB\n", (indent + 2), "", virtual_disk->size);
     if (virtual_disk->ec_profile >= 0)
@@ -60,11 +74,11 @@ void print_virtual_disk(VirtualDisk *virtual_disk, int indent)
     if (virtual_disk->n_ranges && virtual_disk->n_ranges > 0) {
         printf("%*sVirtualDiskRanges\n", indent + 2, "");
         for (int i = 0; i < virtual_disk->n_ranges; i++) {
-            printf("%*s%s / %s\n", indent + 4, "", _get_key_as_string(&virtual_disk->ranges[i]->key->disk_key), _get_key_as_string(&virtual_disk->ranges[i]->key->range_key));
+            print_disk_range_key(virtual_disk->ranges[i]->key, indent + 4);
             if (virtual_disk->ranges[i]->n_ranges && virtual_disk->ranges[i]->n_ranges > 0) {
                 printf("%*sPhysicalDiskRanges\n", indent + 6, "");
                 for (int j = 0; j < virtual_disk->ranges[i]->n_ranges; j++) {
-                    printf("%*s%s / %s\n", indent + 8, "", _get_key_as_string(&virtual_disk->ranges[i]->ranges[j]->disk_key), _get_key_as_string(&virtual_disk->ranges[i]->ranges[j]->range_key));
+                    print_disk_range_key(virtual_disk->ranges[i]->ranges[j], indent + 4);
                 }
             }
         }

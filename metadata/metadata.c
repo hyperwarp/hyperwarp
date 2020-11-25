@@ -6,8 +6,49 @@
 #include <uuid/uuid.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <gmodule.h>
 
 #include "metadata.h"
+
+SLIST_HEAD(, MetadataBackend) g_storage_backends = SLIST_HEAD_INITIALIZER(MetadataBackend);
+
+MetadataBackend *selected_backend = NULL;
+
+void metadata_storage_backend_register(MetadataBackend *backend) {
+    assert(backend->name);
+    SLIST_INSERT_HEAD(&g_storage_backends, backend, slist);
+}
+
+MetadataBackend *get_metadata_backend_by_name(const char* name) {
+    MetadataBackend *backend;
+
+    SLIST_FOREACH(backend, &g_storage_backends, slist) {
+        if (strcmp(backend->name, name) == 0) {
+            return backend;
+        }
+    }
+
+    return NULL;
+}
+
+int use_metadata_storage_backend(const char *name) {
+    g_module_open("libhyperwarp-metadata-fdb.so", G_MODULE_BIND_LAZY);
+
+    MetadataBackend *backend = get_metadata_backend_by_name(name);
+
+    if (backend == NULL) {
+        return -1;
+    }
+
+    selected_backend = backend;
+    return 0;
+}
+
+void register_dso_module_init(void (*fn)(void))
+{
+    printf("register_dso\n");
+    fn();
+}
 
 void _generate_and_set_uuid(ProtobufCBinaryData *key) {
     key->data = realloc(key->data, sizeof(uuid_t));

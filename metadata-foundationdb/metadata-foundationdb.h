@@ -15,11 +15,8 @@ void chk(fdb_error_t err);
 
 /**
  * Persists MetaData in FoundationDB.
- *
- * \param database the FoundationDB instance to persist the MetaData in
- * \param physical_disk the MetaData to persist in FoundationDB
  */
-void metadata_persist(FDBDatabase *database, const Metadata *meta_data);
+void metadata_persist(Metadata *metadata);
 
 /**
  * Fetches MetaData from a given FoundationDB instance.
@@ -28,7 +25,7 @@ void metadata_persist(FDBDatabase *database, const Metadata *meta_data);
  * \return the MetaData stored in FoundationDB
  * \retval NULL if the MetaData could not be found or if there was an error unpacking
  */
-Metadata *metadata_get(FDBDatabase *database);
+Metadata *metadata_get();
 
 /**
  * Persists a PhysicalDiskRange in FoundationDB.

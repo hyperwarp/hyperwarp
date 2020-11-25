@@ -5,35 +5,21 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 
-#define FDB_API_VERSION 620
-#include <foundationdb/fdb_c.h>
 
 #include "util.h"
 #include "metadata.h"
 #include "metadata-foundationdb.h"
 
-void *run_net(void *_unused)
-{
-    chk(fdb_run_network());
-
-    return NULL;
-}
-
 int main()
 {
-    fdb_select_api_version(FDB_API_VERSION);
-
-    chk(fdb_setup_network());
-
-    pthread_t net_thread;
-    assert(0 == pthread_create(&net_thread, NULL, run_net, NULL));
-
-    FDBDatabase *database;
-    chk(fdb_create_database(NULL, &database));
-
     Metadata *metadata = new_metadata();
+
+    if (use_metadata_storage_backend("foundationdb") != 0) {
+        printf("Couldn't load foundationdb backend!\n");
+        exit(-1);
+    }
+
     Allocator *allocator = create_allocator(VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P);
 
     NVMfTransport__NVMfTransportType type = NVMF_TRANSPORT__NVMF_TRANSPORT_TYPE__TRTYPE_TCP;
@@ -70,29 +56,28 @@ int main()
     NVMfTransport *transport10 = create_nvmf_transport(type, address_family, address, "4429", "nqn.2020-11.com.github.hyperwarp:cnode10");
     PhysicalDisk *physical_disk10 = create_physical_disk(metadata, transport10, 266144ULL, 4096ULL, allocator);
 
-
     VirtualDisk *virtual_disk1 = create_virtual_disk(metadata, "vdisk1", 3ULL, allocator);
     VirtualDisk *virtual_disk2 = create_virtual_disk(metadata, "vdisk2", 3ULL, allocator);
 
     print_metadata(metadata, 0);
 
-    metadata_persist(database, metadata);
+    //metadata_persist(database, metadata);
     printf("Wrote MetaData to FDB\n");
 
     metadata__free_unpacked(metadata, NULL);
     allocator = NULL;
     free(allocator);
 
-    metadata = metadata_get(database);
+    //metadata = metadata_get(database);
 
-    print_metadata(metadata, 0);
+    //print_metadata(metadata, 0);
 
-    metadata__free_unpacked(metadata, NULL);
+    //metadata__free_unpacked(metadata, NULL);
 
-    fdb_database_destroy(database);
+    //fdb_database_destroy(database);
 
-    chk(fdb_stop_network());
-    pthread_join(net_thread, NULL);
+    //chk(fdb_stop_network());
+    //pthread_join(net_thread, NULL);
 
     printf("Tada!\n");
 

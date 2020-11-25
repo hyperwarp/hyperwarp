@@ -295,8 +295,7 @@ void _add_physical_disk_range_to_virtual_disk_range(VirtualDiskRange *vdr, DiskR
 }
 
 DiskRangeKey* _allocate_next_physical_disk_range(PhysicalDisk *physical_disk, Allocator *allocator) {
-    DiskRangeKey* range = _new_disk_range_key();
-    _memcpy_disk_range_key(range, physical_disk->unallocated_ranges[0]);
+    DiskRangeKey* range = physical_disk->unallocated_ranges[0];
     _add_allocated_physical_disk_range(physical_disk, range);
     for (int i = 0; i < physical_disk->n_unallocated_ranges; i++) {
         physical_disk->unallocated_ranges[i] = physical_disk->unallocated_ranges[i+1];

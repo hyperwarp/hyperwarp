@@ -6,7 +6,7 @@
 #include <uuid/uuid.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include <gmodule.h>
+#include <dlfcn.h>
 
 #include "metadata.h"
 
@@ -32,7 +32,7 @@ MetadataBackend *get_metadata_backend_by_name(const char* name) {
 }
 
 int use_metadata_storage_backend(const char *name) {
-    g_module_open("libhyperwarp-metadata-fdb.so", G_MODULE_BIND_LAZY);
+    dlopen("libhyperwarp-metadata-fdb.so", RTLD_LAZY);
 
     MetadataBackend *backend = get_metadata_backend_by_name(name);
 

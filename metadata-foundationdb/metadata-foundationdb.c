@@ -218,7 +218,6 @@ void foundationdb_backend_initialize() {
     chk(fdb_create_database(NULL, &foundationdb_database));
 }
 
-
 MetadataBackend foundationdb_backend = {
     .name = "foundationdb",
     .initialize = foundationdb_backend_initialize,

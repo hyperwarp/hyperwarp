@@ -9,7 +9,6 @@
 
 #include "util.h"
 #include "metadata.h"
-#include "metadata-foundationdb.h"
 
 int main()
 {

@@ -32,7 +32,7 @@ MetadataBackend *get_metadata_backend_by_name(const char* name) {
 }
 
 int use_metadata_storage_backend(const char *name) {
-    dlopen("libhyperwarp-metadata-fdb.so", RTLD_LAZY);
+    dlopen("metadata-foundationdb.so", RTLD_LAZY);
 
     MetadataBackend *backend = get_metadata_backend_by_name(name);
 
@@ -46,7 +46,6 @@ int use_metadata_storage_backend(const char *name) {
 
 void register_dso_module_init(void (*fn)(void))
 {
-    printf("register_dso\n");
     fn();
 }
 

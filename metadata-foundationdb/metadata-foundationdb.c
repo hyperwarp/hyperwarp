@@ -14,6 +14,7 @@
 uint64_t metadata_key = 0ULL;
 
 static FDBDatabase *foundationdb_database = NULL;
+static pthread_t net_thread;
 
 void chk(fdb_error_t err)
 {
@@ -210,22 +211,33 @@ static void *run_net(void *_unused)
     return NULL;
 }
 
-static void initialize() {
+static int initialize() {
     fdb_select_api_version(FDB_API_VERSION);
 
     chk(fdb_setup_network());
 
-    pthread_t net_thread;
     assert(0 == pthread_create(&net_thread, NULL, run_net, NULL));
 
     chk(fdb_create_database(NULL, &foundationdb_database));
+
+    return 0;
+}
+
+static int finalize() {
+    fdb_database_destroy(foundationdb_database);
+
+    chk(fdb_stop_network());
+    pthread_join(net_thread, NULL);
+
+    return 0;
 }
 
 MetadataBackend foundationdb_backend = {
     .name = "foundationdb",
     .initialize = initialize,
     .load = load,
-    .persist = persist
+    .persist = persist,
+    .finalize = finalize
 };
 
 static void metadata_backend_foundationdb_init(void) {

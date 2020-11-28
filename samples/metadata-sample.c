@@ -12,12 +12,15 @@
 
 int main()
 {
+    int ret = 0;
     Metadata *metadata = new_metadata();
 
-    if (use_metadata_storage_backend("foundationdb") != 0) {
+    if ((ret = use_metadata_storage_backend("foundationdb")) != 0) {
         printf("Couldn't load foundationdb backend!\n");
         exit(-1);
     }
+
+    metadata_backend_initialize();
 
     Allocator *allocator = create_allocator(VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P);
 
@@ -60,23 +63,19 @@ int main()
 
     print_metadata(metadata, 0);
 
-    //metadata_persist(database, metadata);
+    metadata_persist(metadata);
     printf("Wrote MetaData to FDB\n");
 
     metadata__free_unpacked(metadata, NULL);
-    allocator = NULL;
     free(allocator);
 
-    //metadata = metadata_get(database);
+    metadata = metadata_load();
 
-    //print_metadata(metadata, 0);
+    print_metadata(metadata, 0);
 
-    //metadata__free_unpacked(metadata, NULL);
+    metadata__free_unpacked(metadata, NULL);
 
-    //fdb_database_destroy(database);
-
-    //chk(fdb_stop_network());
-    //pthread_join(net_thread, NULL);
+    metadata_backend_finalize();
 
     printf("Tada!\n");
 

@@ -19,9 +19,10 @@ struct _Allocator {
 
 struct MetadataBackend {
     const char *name;
-    void (*initialize)();
+    int (*initialize)();
     Metadata *(*load)();
-    void (*persist)();
+    void (*persist)(Metadata *);
+    int (*finalize)();
     SLIST_ENTRY(MetadataBackend) slist;
 };
 
@@ -31,6 +32,11 @@ void metadata_storage_backend_register(MetadataBackend *backend);
 MetadataBackend *get_metadata_backend_by_name(const char* name);
 int use_metadata_storage_backend(const char *name);
 void register_dso_module_init(void (*fn)(void));
+
+int metadata_backend_initialize();
+int metadata_persist(Metadata *metadata);
+Metadata *metadata_load();
+int metadata_backend_finalize();
 
 Allocator *create_allocator(VirtualDisk__ErasureCodeProfile ec_profile);
 

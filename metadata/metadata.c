@@ -12,7 +12,7 @@
 
 SLIST_HEAD(, MetadataBackend) g_storage_backends = SLIST_HEAD_INITIALIZER(MetadataBackend);
 
-MetadataBackend *selected_backend = NULL;
+static MetadataBackend *selected_backend = NULL;
 
 void metadata_storage_backend_register(MetadataBackend *backend) {
     assert(backend->name);

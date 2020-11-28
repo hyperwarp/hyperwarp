@@ -10,7 +10,7 @@
 
 uint64_t metadata_key = 0ULL;
 
-FDBDatabase *foundationdb_database = NULL;
+static FDBDatabase *foundationdb_database = NULL;
 
 void chk(fdb_error_t err)
 {

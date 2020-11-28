@@ -25,7 +25,7 @@ void metadata_persist(Metadata *metadata);
  * \return the MetaData stored in FoundationDB
  * \retval NULL if the MetaData could not be found or if there was an error unpacking
  */
-Metadata *metadata_get();
+Metadata *load_metadata();
 
 /**
  * Persists a PhysicalDiskRange in FoundationDB.

@@ -23,7 +23,6 @@ target_include_directories(hyperwarp-metadata PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}"
                           "${CMAKE_CURRENT_SOURCE_DIR}"
-                          "${GLIB2_MODULE_INCLUDE_DIRS}"
                           )
 
 set_target_properties(hyperwarp-metadata PROPERTIES PUBLIC_HEADER metadata.h)

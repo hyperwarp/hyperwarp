@@ -1,12 +1,15 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #define FDB_API_VERSION 620
 #include <foundationdb/fdb_c.h>
 
+#include "metadata.pb-c.h"
+
 #include <pthread.h>
 #include <metadata.h>
-
-#include "metadata-foundationdb.h"
 
 uint64_t metadata_key = 0ULL;
 
@@ -97,7 +100,7 @@ ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, i
 /**
  * Persists MetaData in FoundationDB.
  */
-void metadata_persist(Metadata *metadata)
+static void persist(Metadata *metadata)
 {
     assert(metadata->base.descriptor == &metadata__descriptor);
     proto_message_persist(foundationdb_database, (uint8_t *)&metadata_key, sizeof(uint64_t), (const ProtobufCMessage *)(metadata));
@@ -110,7 +113,7 @@ void metadata_persist(Metadata *metadata)
  * \return the Metadata stored in FoundationDB
  * \retval NULL if the MetaData could not be found or if there was an error unpacking
  */
-Metadata *load_metadata()
+static Metadata *load()
 {
     return (Metadata *)proto_message_get(foundationdb_database, (uint8_t *)&metadata_key, sizeof(uint64_t), &metadata__descriptor);
 }
@@ -200,14 +203,14 @@ VirtualDisk *virtual_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
     return (VirtualDisk *)proto_message_get(database, key->data, key->len, &virtual_disk__descriptor);
 }
 
-void *run_net(void *_unused)
+static void *run_net(void *_unused)
 {
     chk(fdb_run_network());
 
     return NULL;
 }
 
-void foundationdb_backend_initialize() {
+static void initialize() {
     fdb_select_api_version(FDB_API_VERSION);
 
     chk(fdb_setup_network());
@@ -220,9 +223,9 @@ void foundationdb_backend_initialize() {
 
 MetadataBackend foundationdb_backend = {
     .name = "foundationdb",
-    .initialize = foundationdb_backend_initialize,
-    .load = load_metadata,
-    .persist = metadata_persist
+    .initialize = initialize,
+    .load = load,
+    .persist = persist
 };
 
 static void metadata_backend_foundationdb_init(void) {

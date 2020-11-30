@@ -10,9 +10,9 @@
 
 #include <pthread.h>
 #include <metadata.h>
+#include <stdbool.h>
 
 static uint64_t metadata_key = 0ULL;
-
 static FDBDatabase *foundationdb_database = NULL;
 static pthread_t net_thread;
 
@@ -249,11 +249,11 @@ static int finalize() {
     int ret = 0;
 
     fdb_database_destroy(foundationdb_database);
-
-    if ((ret = chk(fdb_stop_network()) != 0)) {
+    foundationdb_database = NULL;
+    if (ret = chk(fdb_stop_network()) != 0) {
         return ret;
     }
-    
+
     pthread_join(net_thread, NULL);
     return ret;
 }
@@ -267,7 +267,7 @@ static MetadataBackend foundationdb_backend = {
 };
 
 static void metadata_backend_foundationdb_init(void) {
-    metadata_storage_backend_register(&foundationdb_backend);
+    metadata_storage_backend_register(&foundationdb_backend, false);
 }
 
 module_init(metadata_backend_foundationdb_init);

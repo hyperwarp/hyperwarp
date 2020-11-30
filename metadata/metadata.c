@@ -6,8 +6,105 @@
 #include <uuid/uuid.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <dlfcn.h>
 
 #include "metadata.h"
+
+SLIST_HEAD(, MetadataBackend) g_storage_backends = SLIST_HEAD_INITIALIZER(MetadataBackend);
+
+static MetadataBackend *selected_backend = NULL;
+static void *backend_handler = NULL;
+
+void metadata_storage_backend_register(MetadataBackend *backend) {
+    assert(backend->name);
+    SLIST_INSERT_HEAD(&g_storage_backends, backend, slist);
+}
+
+int metadata_persist(Metadata *metadata) {
+    int ret = 0;
+
+    if (selected_backend == NULL) {
+        return 1;
+    }
+
+    selected_backend->persist(metadata);
+
+    return ret;
+}
+
+Metadata *metadata_load() {
+    if (selected_backend == NULL) {
+        return NULL;
+    }
+
+    return selected_backend->load();
+}
+
+int metadata_backend_initialize() {
+    int ret = 0;
+
+    if (selected_backend == NULL) {
+        return 1;
+    }
+
+    if ((ret = selected_backend->initialize()) != 0) {
+        return ret;
+    }
+
+    return ret;
+}
+
+
+int metadata_backend_finalize() {
+    int ret = 0;
+
+    if (selected_backend == NULL) {
+        return 1;
+    }
+
+    if ((ret = selected_backend->finalize()) != 0) {
+        return ret;
+    }
+
+    return ret;
+}
+
+MetadataBackend *get_metadata_backend_by_name(const char* name) {
+    MetadataBackend *backend;
+
+    SLIST_FOREACH(backend, &g_storage_backends, slist) {
+        if (strcmp(backend->name, name) == 0) {
+            return backend;
+        }
+    }
+
+    return NULL;
+}
+
+int use_metadata_storage_backend(const char *name) {
+    if (selected_backend != NULL) {
+        return 1;
+    }
+
+    size_t module_so_name_length = strlen("metadata-.so") + strlen(name) + 1;
+    char *module_so_name = (char*)malloc(module_so_name_length);
+    snprintf(module_so_name, module_so_name_length, "metadata-%s.so", name);
+
+    if ((backend_handler = dlopen(module_so_name, RTLD_LAZY)) == NULL) {
+        return 1;
+    }
+
+    if ((selected_backend = get_metadata_backend_by_name(name)) == NULL) {
+        return 1;
+    }
+
+    return 0;
+}
+
+void register_dso_module_init(void (*fn)(void))
+{
+    fn();
+}
 
 void _generate_and_set_uuid(ProtobufCBinaryData *key) {
     key->data = realloc(key->data, sizeof(uuid_t));

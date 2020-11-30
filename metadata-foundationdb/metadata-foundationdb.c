@@ -1,11 +1,20 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #define FDB_API_VERSION 620
 #include <foundationdb/fdb_c.h>
 
-#include "metadata-foundationdb.h"
+#include "metadata.pb-c.h"
+
+#include <pthread.h>
+#include <metadata.h>
 
 uint64_t metadata_key = 0ULL;
+
+static FDBDatabase *foundationdb_database = NULL;
+static pthread_t net_thread;
 
 void chk(fdb_error_t err)
 {
@@ -91,14 +100,11 @@ ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, i
 
 /**
  * Persists MetaData in FoundationDB.
- *
- * \param database the FoundationDB instance to persist the MetaData in
- * \param physical_disk the Metadata to persist in FoundationDB
  */
-void metadata_persist(FDBDatabase *database, const Metadata *metadata)
+static void persist(Metadata *metadata)
 {
     assert(metadata->base.descriptor == &metadata__descriptor);
-    proto_message_persist(database, (uint8_t *)&metadata_key, sizeof(uint64_t), (const ProtobufCMessage *)(metadata));
+    proto_message_persist(foundationdb_database, (uint8_t *)&metadata_key, sizeof(uint64_t), (const ProtobufCMessage *)(metadata));
 }
 
 /**
@@ -108,9 +114,9 @@ void metadata_persist(FDBDatabase *database, const Metadata *metadata)
  * \return the Metadata stored in FoundationDB
  * \retval NULL if the MetaData could not be found or if there was an error unpacking
  */
-Metadata *metadata_get(FDBDatabase *database)
+static Metadata *load()
 {
-    return (Metadata *)proto_message_get(database, (uint8_t *)&metadata_key, sizeof(uint64_t), &metadata__descriptor);
+    return (Metadata *)proto_message_get(foundationdb_database, (uint8_t *)&metadata_key, sizeof(uint64_t), &metadata__descriptor);
 }
 
 /**
@@ -197,3 +203,45 @@ VirtualDisk *virtual_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
 {
     return (VirtualDisk *)proto_message_get(database, key->data, key->len, &virtual_disk__descriptor);
 }
+
+static void *run_net(void *_unused)
+{
+    chk(fdb_run_network());
+
+    return NULL;
+}
+
+static int initialize() {
+    fdb_select_api_version(FDB_API_VERSION);
+
+    chk(fdb_setup_network());
+
+    assert(0 == pthread_create(&net_thread, NULL, run_net, NULL));
+
+    chk(fdb_create_database(NULL, &foundationdb_database));
+
+    return 0;
+}
+
+static int finalize() {
+    fdb_database_destroy(foundationdb_database);
+
+    chk(fdb_stop_network());
+    pthread_join(net_thread, NULL);
+
+    return 0;
+}
+
+MetadataBackend foundationdb_backend = {
+    .name = "foundationdb",
+    .initialize = initialize,
+    .load = load,
+    .persist = persist,
+    .finalize = finalize
+};
+
+static void metadata_backend_foundationdb_init(void) {
+    metadata_storage_backend_register(&foundationdb_backend);
+}
+
+module_init(metadata_backend_foundationdb_init);

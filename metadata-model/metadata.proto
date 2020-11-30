@@ -167,4 +167,5 @@ message Metadata {
     repeated PhysicalDisk physical_disks = 1;
     repeated PhysicalDiskRange physical_disk_ranges = 2;
     repeated VirtualDisk virtual_disks = 3;
+    VirtualDisk.ErasureCodeProfile ec_profile = 4;
 }

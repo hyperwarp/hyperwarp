@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
+#define _GNU_SOURCE
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -10,93 +12,103 @@
 
 #include "metadata.h"
 
-SLIST_HEAD(, MetadataBackend) g_storage_backends = SLIST_HEAD_INITIALIZER(MetadataBackend);
+void metadata_storage_backend_register(MetadataBackend *backend, bool is_safe_to_reuse) {
+    if (get_metadata_backend_context_by_name(backend->name) != NULL) {
+        return;
+    }
 
-static MetadataBackend *selected_backend = NULL;
-static void *backend_handler = NULL;
-
-void metadata_storage_backend_register(MetadataBackend *backend) {
     assert(backend->name);
-    SLIST_INSERT_HEAD(&g_storage_backends, backend, slist);
+
+    MetadataBackendContext *context = malloc(sizeof(MetadataBackendContext));
+    context->was_already_initialized = false;
+    context->is_safe_to_reuse = is_safe_to_reuse;
+    context->backend = backend;
+
+    SLIST_INSERT_HEAD(&g_storage_backends, context, slist);
 }
 
-int metadata_persist(Metadata *metadata) {
+int metadata_persist(HyperwarpMetadata *metadata) {
     int ret = 0;
 
-    if (selected_backend == NULL) {
+    if (metadata->backend_context == NULL) {
         return 1;
     }
 
-    selected_backend->persist(metadata);
+    return metadata->backend_context->backend->persist(metadata->metadata);
+}
+
+int metadata_backend_initialize(HyperwarpMetadata *metadata) {
+    int ret = 0;
+
+    if (metadata->backend_context == NULL) {
+        return 1;
+    }
+
+    if ((metadata->backend_context->is_safe_to_reuse == false) &&
+            (metadata->backend_context->was_already_initialized)) {
+        fprintf(stderr, "The selected module cannot be reinitialized\n");
+        return 1;
+    }
+
+    if ((ret = metadata->backend_context->backend->initialize(metadata->backend_context->was_already_initialized)) != 0) {
+        return ret;
+    }
+
+    metadata->backend_context->was_already_initialized = true;
 
     return ret;
 }
 
-Metadata *metadata_load() {
-    if (selected_backend == NULL) {
-        return NULL;
-    }
 
-    return selected_backend->load();
-}
-
-int metadata_backend_initialize() {
+int metadata_backend_finalize(HyperwarpMetadata *metadata) {
     int ret = 0;
 
-    if (selected_backend == NULL) {
-        return 1;
+    if (metadata->backend_context == NULL) {
+        // if there is no open backend then there is nothing to do
+        return 0;
     }
 
-    if ((ret = selected_backend->initialize()) != 0) {
+    if ((ret = metadata->backend_context->backend->finalize()) != 0) {
         return ret;
     }
 
     return ret;
 }
 
+MetadataBackendContext *get_metadata_backend_context_by_name(const char* name) {
+    MetadataBackendContext *context;
 
-int metadata_backend_finalize() {
-    int ret = 0;
-
-    if (selected_backend == NULL) {
-        return 1;
-    }
-
-    if ((ret = selected_backend->finalize()) != 0) {
-        return ret;
-    }
-
-    return ret;
-}
-
-MetadataBackend *get_metadata_backend_by_name(const char* name) {
-    MetadataBackend *backend;
-
-    SLIST_FOREACH(backend, &g_storage_backends, slist) {
-        if (strcmp(backend->name, name) == 0) {
-            return backend;
+    SLIST_FOREACH(context, &g_storage_backends, slist) {
+        assert(context->backend != NULL);
+        if (strcmp(context->backend->name, name) == 0) {
+            return context;
         }
     }
 
     return NULL;
 }
 
-int use_metadata_storage_backend(const char *name) {
-    if (selected_backend != NULL) {
+static int use_metadata_storage_backend(HyperwarpMetadata *metadata, const char *name) {
+    if (metadata->backend_context != NULL) {
         return 1;
     }
 
-    size_t module_so_name_length = strlen("metadata-.so") + strlen(name) + 1;
-    char *module_so_name = (char*)malloc(module_so_name_length);
-    snprintf(module_so_name, module_so_name_length, "metadata-%s.so", name);
+    char *module_so_name;
+    asprintf(&module_so_name, "metadata-%s.so", name);
 
-    if ((backend_handler = dlopen(module_so_name, RTLD_LAZY)) == NULL) {
+    void *handler;
+    if ((handler = dlopen(module_so_name, RTLD_LAZY)) == NULL) {
+        free(module_so_name);
         return 1;
     }
 
-    if ((selected_backend = get_metadata_backend_by_name(name)) == NULL) {
+    free(module_so_name);
+
+    if ((metadata->backend_context = get_metadata_backend_context_by_name(name)) == NULL) {
         return 1;
     }
+
+    metadata->backend_context->backend_lib_handler = handler;
 
     return 0;
 }
@@ -148,12 +160,70 @@ Allocator *create_allocator(VirtualDisk__ErasureCodeProfile ec_profile)
     return result;
 }
 
-Metadata *new_metadata()
+HyperwarpMetadata *new_metadata(const char *backend_name, VirtualDisk__ErasureCodeProfile ec_profile)
 {
-    Metadata *metadata = (Metadata *)malloc(sizeof(Metadata));
-    metadata__init(metadata);
+    HyperwarpMetadata *metadata = (HyperwarpMetadata *)calloc(1, sizeof(HyperwarpMetadata));
+    metadata->metadata = (Metadata*)calloc(1, sizeof(Metadata));
+    metadata__init(metadata->metadata);
+    metadata->metadata->ec_profile = ec_profile;
+    metadata->allocator = create_allocator(ec_profile);
+
+    if (use_metadata_storage_backend(metadata, backend_name) != 0) {
+        fprintf(stderr, "Could not initialize the selected storage backend");
+        free(metadata);
+        return NULL;
+    }
+
+    if (metadata_backend_initialize(metadata) != 0) {
+        fprintf(stderr, "Could not initialize the selected storage backend\n");
+        free(metadata);
+        return NULL;
+    }
 
     return metadata;
+}
+
+HyperwarpMetadata *load_metadata(const char *backend_name) {
+    HyperwarpMetadata *metadata = (HyperwarpMetadata *)calloc(1, sizeof(HyperwarpMetadata));
+
+    if (use_metadata_storage_backend(metadata, backend_name) != 0) {
+        fprintf(stderr, "Could not initialize the selected storage backend");
+        free(metadata);
+        return NULL;
+    }
+
+    if (metadata_backend_initialize(metadata) != 0) {
+        fprintf(stderr, "Could not initialize the selected storage backend\n");
+        free(metadata);
+        return NULL;
+    }
+
+    metadata->metadata = metadata->backend_context->backend->load();
+
+    if (metadata->metadata != NULL) {
+        metadata->allocator = create_allocator(metadata->metadata->ec_profile);
+        return metadata;
+    } else {
+        metadata_close(metadata);
+        return NULL;
+    }
+}
+
+void metadata_close(HyperwarpMetadata *metadata) {
+
+    metadata__free_unpacked(metadata->metadata, NULL);
+    metadata->metadata = NULL;
+
+    if (metadata->backend_context->backend_lib_handler != NULL) {
+        metadata->backend_context->backend->finalize();
+        dlclose(metadata->backend_context->backend_lib_handler);
+    }
+
+    if (metadata->allocator != NULL) {
+        free(metadata->allocator);
+    }
+
+    free(metadata);
 }
 
 void _add_physical_disk(Metadata *metadata, PhysicalDisk *disk)
@@ -297,24 +367,23 @@ void _generate_and_set_disk_range_key(DiskRangeKey *key, ProtobufCBinaryData par
     _generate_and_set_uuid(&key->range_key);
 }
 
-PhysicalDiskRange *_initialize_next_physical_disk_range(Metadata *metadata,
+PhysicalDiskRange *_initialize_next_physical_disk_range(HyperwarpMetadata *metadata,
         PhysicalDisk *disk,
-        Allocator *allocator,
         int disk_index)
 {
     PhysicalDiskRange *range = _new_physical_disk_range();
     _generate_and_set_disk_range_key(range->key, disk->key);
-    _initialize_disk_range_size(range->size, allocator->physical_disk_range_sector_count, disk_index);
-    _add_physical_disk_range(metadata, range);
+    _initialize_disk_range_size(range->size, metadata->allocator->physical_disk_range_sector_count, disk_index);
+    _add_physical_disk_range(metadata->metadata, range);
     _add_unallocated_physical_disk_range(disk, range);
 
     return range;
 }
 
-PhysicalDisk *create_physical_disk(Metadata *metadata, NVMfTransport *transport, uint64_t sector_count, uint64_t sector_size, Allocator *allocator)
+PhysicalDisk *create_physical_disk(HyperwarpMetadata *metadata, NVMfTransport *transport, uint64_t sector_count, uint64_t sector_size)
 {
     // allocator sector size incompatible with physical disk sector size
-    if (sector_size != allocator->sector_size)
+    if (sector_size != metadata->allocator->sector_size)
     {
         return NULL;
     }
@@ -327,24 +396,19 @@ PhysicalDisk *create_physical_disk(Metadata *metadata, NVMfTransport *transport,
     physical_disk->size = sector_count * sector_size;
     physical_disk->transport = transport;
 
-    size_t n_ranges = ceil(sector_count / allocator->physical_disk_range_sector_count);
+    size_t n_ranges = ceil(sector_count / metadata->allocator->physical_disk_range_sector_count);
     for (int i = 0; i < n_ranges; i++)
     {
-        _initialize_next_physical_disk_range(metadata, physical_disk, allocator, i);
+        _initialize_next_physical_disk_range(metadata, physical_disk, i);
     }
 
-    if (metadata != NULL)
-    {
-        _add_physical_disk(metadata, physical_disk);
-        _sort_physical_disks_by_unallocated_ranges(metadata);
-    }
+    _add_physical_disk(metadata->metadata, physical_disk);
+    _sort_physical_disks_by_unallocated_ranges(metadata->metadata);
 
     return physical_disk;
 }
 
-VirtualDisk *_new_virtual_disk(char *name,
-                               VirtualDisk__ErasureCodeProfile ec_profile,
-                               uint64_t size)
+static VirtualDisk *_new_virtual_disk(char *name, uint64_t size, VirtualDisk__ErasureCodeProfile ec_profile)
 {
     VirtualDisk *virtual_disk = (VirtualDisk *)malloc(sizeof(VirtualDisk));
     virtual_disk__init(virtual_disk);
@@ -391,7 +455,7 @@ void _add_physical_disk_range_to_virtual_disk_range(VirtualDiskRange *vdr, DiskR
     vdr->n_ranges = last + 1;
 }
 
-DiskRangeKey* _allocate_next_physical_disk_range(PhysicalDisk *physical_disk, Allocator *allocator) {
+DiskRangeKey* _allocate_next_physical_disk_range(PhysicalDisk *physical_disk) {
     DiskRangeKey* range = physical_disk->unallocated_ranges[0];
     _add_allocated_physical_disk_range(physical_disk, range);
     for (int i = 0; i < physical_disk->n_unallocated_ranges - 1; i++) {
@@ -415,9 +479,11 @@ void _add_virtual_disk_range_to_virtual_disk(VirtualDisk *virtual_disk, VirtualD
     virtual_disk->n_ranges = last + 1;
 }
 
-VirtualDisk *create_virtual_disk(Metadata *metadata, char *name, uint64_t size, Allocator *allocator)
+VirtualDisk *create_virtual_disk(HyperwarpMetadata *hwmetadata, char *name, uint64_t size)
 {
-    size_t n_physical_ranges = (allocator->n + allocator->p);
+    size_t n_physical_ranges = (hwmetadata->allocator->n + hwmetadata->allocator->p);
+
+    Metadata *metadata = hwmetadata->metadata;
 
     // abort if there are less than n+p physical disks registered in the metadata
     if (metadata->n_physical_disks < n_physical_ranges) {
@@ -425,7 +491,7 @@ VirtualDisk *create_virtual_disk(Metadata *metadata, char *name, uint64_t size, 
     }
 
     // abort if the requested virtual disk size can not be evenly divided by the number of data chunks of the selected allocator
-    if ((size * allocator->virtual_disk_range_sector_count) % allocator->n != 0)
+    if ((size * hwmetadata->allocator->virtual_disk_range_sector_count) % hwmetadata->allocator->n != 0)
     {
         return NULL;
     }
@@ -436,13 +502,13 @@ VirtualDisk *create_virtual_disk(Metadata *metadata, char *name, uint64_t size, 
      * then each VirtualDiskRange is going to map to 6xPhysicalDiskRanges
      * (for 4+2 EC)
      */
-    VirtualDisk *virtual_disk = _new_virtual_disk(name, allocator->ec_profile, size);
+    VirtualDisk *virtual_disk = _new_virtual_disk(name, size, metadata->ec_profile);
 
     int rc = 0;
 
     for (int i = 0; i < size; i++)
     {
-        VirtualDiskRange *vdr = _create_virtual_disk_range(allocator, virtual_disk->key, i);
+        VirtualDiskRange *vdr = _create_virtual_disk_range(hwmetadata->allocator, virtual_disk->key, i);
         for (int j = 0; j < n_physical_ranges; j++)
         {
             PhysicalDisk *physical_disk = metadata->physical_disks[j];
@@ -452,7 +518,7 @@ VirtualDisk *create_virtual_disk(Metadata *metadata, char *name, uint64_t size, 
                 break;
             }
 
-            DiskRangeKey *pdr = _allocate_next_physical_disk_range(physical_disk, allocator);
+            DiskRangeKey *pdr = _allocate_next_physical_disk_range(physical_disk);
             _add_physical_disk_range_to_virtual_disk_range(vdr, pdr);
         }
 
@@ -476,12 +542,12 @@ VirtualDisk *create_virtual_disk(Metadata *metadata, char *name, uint64_t size, 
     return virtual_disk;
 }
 
-VirtualDiskRange **translate_vdaddress_to_vdranges(Allocator *allocator, VirtualDisk *vdisk, uint64_t start_address, uint64_t io_size)
+VirtualDiskRange **translate_vdaddress_to_vdranges(HyperwarpMetadata *metadata, VirtualDisk *vdisk, uint64_t start_address, uint64_t io_size)
 {
     uint64_t end_address = start_address + io_size - 1;
 
-    size_t start_index = floor(start_address / allocator->virtual_disk_range_sector_count);
-    size_t end_index = ceil(end_address / allocator->virtual_disk_range_sector_count);
+    size_t start_index = floor(start_address / metadata->allocator->virtual_disk_range_sector_count);
+    size_t end_index = ceil(end_address / metadata->allocator->virtual_disk_range_sector_count);
 
     size_t range_count = (end_index - start_index) + 1;
 

@@ -27,4 +27,4 @@ target_include_directories(metadata-foundationdb PUBLIC
                           "${CMAKE_CURRENT_SOURCE_DIR}"
                           )
 set_target_properties(metadata-foundationdb PROPERTIES PREFIX "")
-install(TARGETS metadata-foundationdb LIBRARY DESTINATION ${PROJECT_BINARY_DIR})
+install(TARGETS metadata-foundationdb LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/hyperwarp)

@@ -15,13 +15,16 @@ int main()
     int ret = 0;
 
     if ((ret = use_metadata_storage_backend("foundationdb")) != 0) {
-        printf("Couldn't load foundationdb backend!\n");
-        exit(-1);
+        fprintf(stderr, "Couldn't load foundationdb backend!\n");
+        exit(ret);
+    }
+
+    if ((ret = metadata_backend_initialize()) != 0) {
+        fprintf(stderr, "Could not initialize the foundationdb backend\n");
+        exit(ret);
     }
 
     Metadata *metadata = new_metadata();
-
-    metadata_backend_initialize();
 
     Allocator *allocator = create_allocator(VIRTUAL_DISK__ERASURE_CODE_PROFILE__EC_4_2P);
 
@@ -80,5 +83,5 @@ int main()
 
     printf("Tada!\n");
 
-    return 0;
+    return ret;
 }

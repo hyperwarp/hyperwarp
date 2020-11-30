@@ -13,12 +13,13 @@
 int main()
 {
     int ret = 0;
-    Metadata *metadata = new_metadata();
 
     if ((ret = use_metadata_storage_backend("foundationdb")) != 0) {
         printf("Couldn't load foundationdb backend!\n");
         exit(-1);
     }
+
+    Metadata *metadata = new_metadata();
 
     metadata_backend_initialize();
 

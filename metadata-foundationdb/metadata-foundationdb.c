@@ -53,7 +53,7 @@ static int proto_message_persist(FDBDatabase *database, const uint8_t *key, int 
     fdb_transaction_set(transaction, key, key_len, buffer, length);
 
     future = fdb_transaction_commit(transaction);
-    if ((ret = chk(fdb_future_block_until_ready(future)) != )) {
+    if ((ret = chk(fdb_future_block_until_ready(future)) != 0)) {
         return ret;
     }
 

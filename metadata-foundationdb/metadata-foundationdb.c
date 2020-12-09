@@ -250,12 +250,12 @@ static int finalize() {
 
     fdb_database_destroy(foundationdb_database);
 
-    if ((chk(fdb_stop_network()) != 0)) {
+    if ((ret = chk(fdb_stop_network()) != 0)) {
         return ret;
     }
+    
     pthread_join(net_thread, NULL);
-
-    return 0;
+    return ret;
 }
 
 static MetadataBackend foundationdb_backend = {

@@ -21,7 +21,7 @@ struct MetadataBackend {
     const char *name;
     int (*initialize)();
     Metadata *(*load)();
-    void (*persist)(Metadata *);
+    int (*persist)(Metadata *);
     int (*finalize)();
     SLIST_ENTRY(MetadataBackend) slist;
 };

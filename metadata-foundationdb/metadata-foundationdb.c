@@ -11,18 +11,19 @@
 #include <pthread.h>
 #include <metadata.h>
 
-uint64_t metadata_key = 0ULL;
+static uint64_t metadata_key = 0ULL;
 
 static FDBDatabase *foundationdb_database = NULL;
 static pthread_t net_thread;
 
-void chk(fdb_error_t err)
+int chk(fdb_error_t err)
 {
     if (err)
     {
         fprintf(stderr, "Error: %s\n", fdb_get_error(err));
-        abort();
+        return -1;
     }
+    return 0;
 }
 
 /**
@@ -32,10 +33,11 @@ void chk(fdb_error_t err)
  * \param key the key to store the ProtobufCMessage with in FoundationDB
  * \param message the ProtobufCMessage to persist in FoundationDB
  */
-void proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessage *message)
+int proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessage *message)
 {
     void *buffer;
     unsigned length;
+    int ret = 0;
 
     length = protobuf_c_message_get_packed_size(message);
     buffer = malloc(length);
@@ -44,7 +46,9 @@ void proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_le
     FDBTransaction *transaction;
     FDBFuture *future;
 
-    chk(fdb_database_create_transaction(database, &transaction));
+    if ((ret = chk(fdb_database_create_transaction(database, &transaction))) != 0) {
+        return ret;
+    }
 
     fdb_transaction_set(transaction, key, key_len, buffer, length);
 
@@ -101,10 +105,10 @@ ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, i
 /**
  * Persists MetaData in FoundationDB.
  */
-static void persist(Metadata *metadata)
+static int persist(Metadata *metadata)
 {
     assert(metadata->base.descriptor == &metadata__descriptor);
-    proto_message_persist(foundationdb_database, (uint8_t *)&metadata_key, sizeof(uint64_t), (const ProtobufCMessage *)(metadata));
+    return proto_message_persist(foundationdb_database, (uint8_t *)&metadata_key, sizeof(uint64_t), (const ProtobufCMessage *)(metadata));
 }
 
 /**
@@ -125,10 +129,10 @@ static Metadata *load()
  * \param database the FoundationDB instance to persist the PhysicalDisk in
  * \param physical_disk the PhysicalDisk to persist in FoundationDB
  */
-void physical_disk_persist(FDBDatabase *database, PhysicalDisk *physical_disk)
+static int physical_disk_persist(FDBDatabase *database, PhysicalDisk *physical_disk)
 {
     assert(physical_disk->base.descriptor == &physical_disk__descriptor);
-    proto_message_persist(database, physical_disk->key.data, physical_disk->key.len, (const ProtobufCMessage *)(physical_disk));
+    return proto_message_persist(database, physical_disk->key.data, physical_disk->key.len, (const ProtobufCMessage *)(physical_disk));
 }
 
 /**
@@ -185,10 +189,10 @@ PhysicalDiskRange *physical_disk_range_get(FDBDatabase *database, DiskRangeKey *
  * \param database the FoundationDB instance to persist the VirtualDisk in
  * \param virtual_disk the VirtualDisk to persist in FoundationDB
  */
-void virtual_disk_persist(FDBDatabase *database, VirtualDisk *virtual_disk)
+static int virtual_disk_persist(FDBDatabase *database, VirtualDisk *virtual_disk)
 {
     assert(virtual_disk->base.descriptor == &virtual_disk__descriptor);
-    proto_message_persist(database, virtual_disk->key.data, virtual_disk->key.len, (const ProtobufCMessage *)(virtual_disk));
+    return proto_message_persist(database, virtual_disk->key.data, virtual_disk->key.len, (const ProtobufCMessage *)(virtual_disk));
 }
 
 /**
@@ -212,21 +216,33 @@ static void *run_net(void *_unused)
 }
 
 static int initialize() {
+    int ret = 0;
+
     fdb_select_api_version(FDB_API_VERSION);
 
-    chk(fdb_setup_network());
+    if ((ret = chk(fdb_setup_network())) != 0) {
+        return ret;
+    }
 
-    assert(0 == pthread_create(&net_thread, NULL, run_net, NULL));
+    if ((ret = pthread_create(&net_thread, NULL, run_net, NULL) != 0)) {
+        return ret;
+    }
 
-    chk(fdb_create_database(NULL, &foundationdb_database));
+    if ((ret = chk(fdb_create_database(NULL, &foundationdb_database))) != 0) {
+        return ret;
+    }
 
     return 0;
 }
 
 static int finalize() {
+    int ret = 0;
+
     fdb_database_destroy(foundationdb_database);
 
-    chk(fdb_stop_network());
+    if ((chk(fdb_stop_network()) != 0)) {
+        return ret;
+    }
     pthread_join(net_thread, NULL);
 
     return 0;

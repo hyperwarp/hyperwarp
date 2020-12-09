@@ -11,18 +11,19 @@
 #include <pthread.h>
 #include <metadata.h>
 
-uint64_t metadata_key = 0ULL;
+static uint64_t metadata_key = 0ULL;
 
 static FDBDatabase *foundationdb_database = NULL;
 static pthread_t net_thread;
 
-void chk(fdb_error_t err)
+static int chk(fdb_error_t err)
 {
     if (err)
     {
         fprintf(stderr, "Error: %s\n", fdb_get_error(err));
-        abort();
+        return -1;
     }
+    return 0;
 }
 
 /**
@@ -32,10 +33,11 @@ void chk(fdb_error_t err)
  * \param key the key to store the ProtobufCMessage with in FoundationDB
  * \param message the ProtobufCMessage to persist in FoundationDB
  */
-void proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessage *message)
+static int proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessage *message)
 {
     void *buffer;
     unsigned length;
+    int ret = 0;
 
     length = protobuf_c_message_get_packed_size(message);
     buffer = malloc(length);
@@ -44,12 +46,16 @@ void proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_le
     FDBTransaction *transaction;
     FDBFuture *future;
 
-    chk(fdb_database_create_transaction(database, &transaction));
+    if ((ret = chk(fdb_database_create_transaction(database, &transaction))) != 0) {
+        return ret;
+    }
 
     fdb_transaction_set(transaction, key, key_len, buffer, length);
 
     future = fdb_transaction_commit(transaction);
-    chk(fdb_future_block_until_ready(future));
+    if ((ret = chk(fdb_future_block_until_ready(future)) != 0)) {
+        return ret;
+    }
 
     fdb_future_destroy(future);
     fdb_transaction_destroy(transaction);
@@ -66,21 +72,27 @@ void proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_le
  * \return the ProtobufCMessage stored in FoundationDB under the given key
  * \retval NULL if the ProtobufCMessage could not be found or if there was an error unpacking
  */
-ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessageDescriptor *descriptor)
+static ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessageDescriptor *descriptor)
 {
     ProtobufCMessage *message = NULL;
     FDBTransaction *transaction;
     FDBFuture *future;
 
-    chk(fdb_database_create_transaction(database, &transaction));
+    if (chk(fdb_database_create_transaction(database, &transaction)) != 0) {
+        return NULL;
+    }
     future = fdb_transaction_get(transaction, key, key_len, 0);
-    chk(fdb_future_block_until_ready(future));
+    if (chk(fdb_future_block_until_ready(future)) != 0) {
+        return NULL;
+    }
 
     fdb_bool_t exists;
     const uint8_t *buffer;
     int length;
 
-    chk(fdb_future_get_value(future, &exists, &buffer, &length));
+    if (chk(fdb_future_get_value(future, &exists, &buffer, &length)) != 0) {
+        return NULL;
+    }
 
     if (exists)
     {
@@ -90,7 +102,9 @@ ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, i
     fdb_future_destroy(future);
 
     future = fdb_transaction_commit(transaction);
-    chk(fdb_future_block_until_ready(future));
+    if (chk(fdb_future_block_until_ready(future)) != 0) {
+        return NULL;
+    }
     fdb_future_destroy(future);
 
     fdb_transaction_destroy(transaction);
@@ -101,10 +115,10 @@ ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, i
 /**
  * Persists MetaData in FoundationDB.
  */
-static void persist(Metadata *metadata)
+static int persist(Metadata *metadata)
 {
     assert(metadata->base.descriptor == &metadata__descriptor);
-    proto_message_persist(foundationdb_database, (uint8_t *)&metadata_key, sizeof(uint64_t), (const ProtobufCMessage *)(metadata));
+    return proto_message_persist(foundationdb_database, (uint8_t *)&metadata_key, sizeof(uint64_t), (const ProtobufCMessage *)(metadata));
 }
 
 /**
@@ -125,10 +139,10 @@ static Metadata *load()
  * \param database the FoundationDB instance to persist the PhysicalDisk in
  * \param physical_disk the PhysicalDisk to persist in FoundationDB
  */
-void physical_disk_persist(FDBDatabase *database, PhysicalDisk *physical_disk)
+static int physical_disk_persist(FDBDatabase *database, PhysicalDisk *physical_disk)
 {
     assert(physical_disk->base.descriptor == &physical_disk__descriptor);
-    proto_message_persist(database, physical_disk->key.data, physical_disk->key.len, (const ProtobufCMessage *)(physical_disk));
+    return proto_message_persist(database, physical_disk->key.data, physical_disk->key.len, (const ProtobufCMessage *)(physical_disk));
 }
 
 /**
@@ -139,7 +153,7 @@ void physical_disk_persist(FDBDatabase *database, PhysicalDisk *physical_disk)
  * \return the PhysicalDisk stored in FoundationDB under the given key
  * \retval NULL if the PhysicalDisk could not be found or if there was an error unpacking
  */
-PhysicalDisk *physical_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
+static PhysicalDisk *physical_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
 {
     return (PhysicalDisk *)proto_message_get(database, key->data, key->len, &physical_disk__descriptor);
 }
@@ -150,7 +164,7 @@ PhysicalDisk *physical_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
  * \param database the FoundationDB instance to persist the PhysicalDiskRange in
  * \param physical_disk the PhysicalDiskRange to persist in FoundationDB
  */
-void physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physical_disk_range)
+static int physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physical_disk_range)
 {
     assert(physical_disk_range->base.descriptor == &physical_disk_range__descriptor);
 
@@ -158,7 +172,7 @@ void physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physi
     uint8_t *buffer = malloc(length);
     disk_range_key__pack(physical_disk_range->key, buffer);
 
-    proto_message_persist(database, buffer, length, (const ProtobufCMessage *)(physical_disk_range));
+    return proto_message_persist(database, buffer, length, (const ProtobufCMessage *)(physical_disk_range));
 }
 
 /**
@@ -169,7 +183,7 @@ void physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physi
  * \return the PhysicalDiskRange stored in FoundationDB under the given key
  * \retval NULL if the PhysicalDiskRange could not be found or if there was an error unpacking
  */
-PhysicalDiskRange *physical_disk_range_get(FDBDatabase *database, DiskRangeKey *key)
+static PhysicalDiskRange *physical_disk_range_get(FDBDatabase *database, DiskRangeKey *key)
 {
     int length = disk_range_key__get_packed_size(key);
     uint8_t *buffer = malloc(length);
@@ -185,10 +199,10 @@ PhysicalDiskRange *physical_disk_range_get(FDBDatabase *database, DiskRangeKey *
  * \param database the FoundationDB instance to persist the VirtualDisk in
  * \param virtual_disk the VirtualDisk to persist in FoundationDB
  */
-void virtual_disk_persist(FDBDatabase *database, VirtualDisk *virtual_disk)
+static int virtual_disk_persist(FDBDatabase *database, VirtualDisk *virtual_disk)
 {
     assert(virtual_disk->base.descriptor == &virtual_disk__descriptor);
-    proto_message_persist(database, virtual_disk->key.data, virtual_disk->key.len, (const ProtobufCMessage *)(virtual_disk));
+    return proto_message_persist(database, virtual_disk->key.data, virtual_disk->key.len, (const ProtobufCMessage *)(virtual_disk));
 }
 
 /**
@@ -199,7 +213,7 @@ void virtual_disk_persist(FDBDatabase *database, VirtualDisk *virtual_disk)
  * \return the VirtualDisk stored in FoundationDB under the given key
  * \retval NULL if the VirtualDisk could not be found or if there was an error unpacking
  */
-VirtualDisk *virtual_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
+static VirtualDisk *virtual_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
 {
     return (VirtualDisk *)proto_message_get(database, key->data, key->len, &virtual_disk__descriptor);
 }
@@ -212,27 +226,39 @@ static void *run_net(void *_unused)
 }
 
 static int initialize() {
+    int ret = 0;
+
     fdb_select_api_version(FDB_API_VERSION);
 
-    chk(fdb_setup_network());
+    if ((ret = chk(fdb_setup_network())) != 0) {
+        return ret;
+    }
 
-    assert(0 == pthread_create(&net_thread, NULL, run_net, NULL));
+    if ((ret = pthread_create(&net_thread, NULL, run_net, NULL) != 0)) {
+        return ret;
+    }
 
-    chk(fdb_create_database(NULL, &foundationdb_database));
+    if ((ret = chk(fdb_create_database(NULL, &foundationdb_database))) != 0) {
+        return ret;
+    }
 
     return 0;
 }
 
 static int finalize() {
+    int ret = 0;
+
     fdb_database_destroy(foundationdb_database);
 
-    chk(fdb_stop_network());
+    if ((chk(fdb_stop_network()) != 0)) {
+        return ret;
+    }
     pthread_join(net_thread, NULL);
 
     return 0;
 }
 
-MetadataBackend foundationdb_backend = {
+static MetadataBackend foundationdb_backend = {
     .name = "foundationdb",
     .initialize = initialize,
     .load = load,

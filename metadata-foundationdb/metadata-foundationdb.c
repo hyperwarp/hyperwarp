@@ -164,7 +164,7 @@ static PhysicalDisk *physical_disk_get(FDBDatabase *database, ProtobufCBinaryDat
  * \param database the FoundationDB instance to persist the PhysicalDiskRange in
  * \param physical_disk the PhysicalDiskRange to persist in FoundationDB
  */
-static void physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physical_disk_range)
+static int physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physical_disk_range)
 {
     assert(physical_disk_range->base.descriptor == &physical_disk_range__descriptor);
 
@@ -172,7 +172,7 @@ static void physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange
     uint8_t *buffer = malloc(length);
     disk_range_key__pack(physical_disk_range->key, buffer);
 
-    proto_message_persist(database, buffer, length, (const ProtobufCMessage *)(physical_disk_range));
+    return proto_message_persist(database, buffer, length, (const ProtobufCMessage *)(physical_disk_range));
 }
 
 /**

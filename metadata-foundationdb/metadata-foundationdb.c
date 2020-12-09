@@ -53,7 +53,9 @@ static int proto_message_persist(FDBDatabase *database, const uint8_t *key, int 
     fdb_transaction_set(transaction, key, key_len, buffer, length);
 
     future = fdb_transaction_commit(transaction);
-    chk(fdb_future_block_until_ready(future));
+    if ((ret = chk(fdb_future_block_until_ready(future)) != )) {
+        return ret;
+    }
 
     fdb_future_destroy(future);
     fdb_transaction_destroy(transaction);
@@ -76,15 +78,21 @@ static ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t 
     FDBTransaction *transaction;
     FDBFuture *future;
 
-    chk(fdb_database_create_transaction(database, &transaction));
+    if (chk(fdb_database_create_transaction(database, &transaction)) != 0) {
+        return NULL;
+    }
     future = fdb_transaction_get(transaction, key, key_len, 0);
-    chk(fdb_future_block_until_ready(future));
+    if (chk(fdb_future_block_until_ready(future)) != 0) {
+        return NULL;
+    }
 
     fdb_bool_t exists;
     const uint8_t *buffer;
     int length;
 
-    chk(fdb_future_get_value(future, &exists, &buffer, &length));
+    if (chk(fdb_future_get_value(future, &exists, &buffer, &length)) != 0) {
+        return NULL;
+    }
 
     if (exists)
     {
@@ -94,7 +102,9 @@ static ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t 
     fdb_future_destroy(future);
 
     future = fdb_transaction_commit(transaction);
-    chk(fdb_future_block_until_ready(future));
+    if (chk(fdb_future_block_until_ready(future)) != 0) {
+        return NULL;
+    }
     fdb_future_destroy(future);
 
     fdb_transaction_destroy(transaction);

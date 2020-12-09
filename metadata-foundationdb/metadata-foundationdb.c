@@ -16,7 +16,7 @@ static uint64_t metadata_key = 0ULL;
 static FDBDatabase *foundationdb_database = NULL;
 static pthread_t net_thread;
 
-int chk(fdb_error_t err)
+static int chk(fdb_error_t err)
 {
     if (err)
     {
@@ -33,7 +33,7 @@ int chk(fdb_error_t err)
  * \param key the key to store the ProtobufCMessage with in FoundationDB
  * \param message the ProtobufCMessage to persist in FoundationDB
  */
-int proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessage *message)
+static int proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessage *message)
 {
     void *buffer;
     unsigned length;
@@ -70,7 +70,7 @@ int proto_message_persist(FDBDatabase *database, const uint8_t *key, int key_len
  * \return the ProtobufCMessage stored in FoundationDB under the given key
  * \retval NULL if the ProtobufCMessage could not be found or if there was an error unpacking
  */
-ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessageDescriptor *descriptor)
+static ProtobufCMessage *proto_message_get(FDBDatabase *database, const uint8_t *key, int key_len, const ProtobufCMessageDescriptor *descriptor)
 {
     ProtobufCMessage *message = NULL;
     FDBTransaction *transaction;
@@ -143,7 +143,7 @@ static int physical_disk_persist(FDBDatabase *database, PhysicalDisk *physical_d
  * \return the PhysicalDisk stored in FoundationDB under the given key
  * \retval NULL if the PhysicalDisk could not be found or if there was an error unpacking
  */
-PhysicalDisk *physical_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
+static PhysicalDisk *physical_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
 {
     return (PhysicalDisk *)proto_message_get(database, key->data, key->len, &physical_disk__descriptor);
 }
@@ -154,7 +154,7 @@ PhysicalDisk *physical_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
  * \param database the FoundationDB instance to persist the PhysicalDiskRange in
  * \param physical_disk the PhysicalDiskRange to persist in FoundationDB
  */
-void physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physical_disk_range)
+static void physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physical_disk_range)
 {
     assert(physical_disk_range->base.descriptor == &physical_disk_range__descriptor);
 
@@ -173,7 +173,7 @@ void physical_disk_range_persist(FDBDatabase *database, PhysicalDiskRange *physi
  * \return the PhysicalDiskRange stored in FoundationDB under the given key
  * \retval NULL if the PhysicalDiskRange could not be found or if there was an error unpacking
  */
-PhysicalDiskRange *physical_disk_range_get(FDBDatabase *database, DiskRangeKey *key)
+static PhysicalDiskRange *physical_disk_range_get(FDBDatabase *database, DiskRangeKey *key)
 {
     int length = disk_range_key__get_packed_size(key);
     uint8_t *buffer = malloc(length);
@@ -203,7 +203,7 @@ static int virtual_disk_persist(FDBDatabase *database, VirtualDisk *virtual_disk
  * \return the VirtualDisk stored in FoundationDB under the given key
  * \retval NULL if the VirtualDisk could not be found or if there was an error unpacking
  */
-VirtualDisk *virtual_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
+static VirtualDisk *virtual_disk_get(FDBDatabase *database, ProtobufCBinaryData *key)
 {
     return (VirtualDisk *)proto_message_get(database, key->data, key->len, &virtual_disk__descriptor);
 }
@@ -248,7 +248,7 @@ static int finalize() {
     return 0;
 }
 
-MetadataBackend foundationdb_backend = {
+static MetadataBackend foundationdb_backend = {
     .name = "foundationdb",
     .initialize = initialize,
     .load = load,
